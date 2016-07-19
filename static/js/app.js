@@ -4,26 +4,30 @@ var angular, console, moment;
 (function (angular) {
     'use strict';
 	
-    var ACTION_COME = 'coming',
-        ACTION_LEAVE = 'leaving',
+    var BOOKING_COMING = 'BOOKING_COMING',
+        BOOKING_LEAVING = 'BOOKING_LEAVING',
+        IDB_NAME = 'TimeTrackrDB',
+        IDX_BOOKING_TYPE = 'type_idx',
+        IDX_BOOKING_TIMESTAMP = 'tstamp_idx',
 		CONFIG_STORE_NAME = 'TrackrConfig',
-		OBJECT_STORE_NAME = 'trackedActions',
+		OBJECT_STORE_NAME = 'trackedBookings',
 		TOAST_DELAY = 3000,
         // Predefine function names to satisfy jslint
-        updateTrackedActions;
+        updateTrackedBookings;
     
-    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast) {
-        $scope.trackedActions = [];
+    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
+        moment.locale($locale.id);
+        $scope.trackedBookings = [];
         
-        $scope.trackAction = function () {
+        $scope.trackBooking = function () {
 			$indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
 				var type =  null,
 					timestamp = moment(new Date()).seconds(0);
 				
-				if ($scope.trackedActions.length === 0 || $scope.trackedActions[0].type === ACTION_LEAVE) {
-					type = ACTION_COME;
+				if ($scope.trackedBookings.length === 0 || $scope.trackedBookings[0].type === BOOKING_LEAVING) {
+					type = BOOKING_COMING;
 				} else {
-					type = ACTION_LEAVE;
+					type = BOOKING_LEAVING;
 				}
 				
 				store
@@ -31,87 +35,92 @@ var angular, console, moment;
 						'type': type,
 						'timestamp': timestamp.unix()
 					})
-					.then(updateTrackedActions);
+					.then(updateTrackedBookings);
 			});
         };
 		
-		$scope.deleteTrackedAction = function (action) {
-			var idx = $scope.trackedActions.indexOf(action),
-				toast = $mdToast.simple();
-			
-			toast
-				.textContent('Deleted tracked action')
-				.action('UNDO')
-				.highlightAction(true)
-                .highlightClass('md-primary')
-				.hideDelay(TOAST_DELAY);
-			
-			if (idx >= 0) {
-				$scope.trackedActions.splice(idx, 1);
-				
-				$mdToast
-					.show(toast)
-					.then(function (response) {
-						// UNDO pressed
-						if (response === undefined) {
-							$indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
-								store['delete'](action.timestamp.unix());
-							});
-						} else {
-							updateTrackedActions();
-						}
-					});
-			}
+		$scope.deleteTrackedBooking = function (booking) {
+            $translate(['TOAST_DELETE_SINGLE', 'UNDO']).then(function (translations) {
+                var idx = $scope.trackedBookings.indexOf(booking),
+                    toast = $mdToast.simple();
+
+                toast
+                    .textContent(translations.TOAST_DELETE_SINGLE)
+                    .action(translations.UNDO)
+                    .highlightAction(true)
+                    .highlightClass('md-primary')
+                    .hideDelay(TOAST_DELAY);
+
+                console.log(arguments);
+                if (idx >= 0) {
+                    $scope.trackedBookings.splice(idx, 1);
+
+                    $mdToast
+                        .show(toast)
+                        .then(function (response) {
+                            // UNDO pressed
+                            if (response === undefined) {
+                                $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
+                                    store['delete'](booking.timestamp.unix());
+                                });
+                            } else {
+                                updateTrackedBookings();
+                            }
+                        });
+                }
+            });
 		};
 		
-		$scope.deleteAllTrackedActions = function (evt) {
-			var confirm = $mdDialog.confirm();
-			
-			confirm
-				.title('Do you really want to delete all tracked actions?')
-				.textContent('If you confirm this, you agree to give me all your money!')
-				.ariaLabel('Delete all tracked actions')
-				.targetEvent(evt)
-				.ok('Yes, I do!')
-				.cancel('Maybe not');
-			
-			$mdDialog
-				.show(confirm)
-				.then(function () {
-					var toast = $mdToast.simple();
-					
-					// just visually remove the tracked actions
-					$scope.trackedActions = [];
-					
-					toast
-						.textContent('Deleted all tracked actions.')
-						.action('UNDO')
-						.highlightAction(true)
-						.highlightClass('md-primary')
-						.hideDelay(TOAST_DELAY);
-					
-					$mdToast
-						.show(toast)
-						.then(function (response) {
-							if (response === undefined) {
-								// really remove the actions from indexeddb
-								$indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
-									store
-										.clear()
-										.then(updateTrackedActions);
-								});
-							} else {
-								updateTrackedActions();
-							}
-						});
-				});
+		$scope.deleteAllTrackedBookings = function (evt) {
+            $translate(['TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL', 'DIALOG_CONTENT_DELETE_ALL', 'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS', 'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO']).then(function (translations) {
+                var confirm = $mdDialog.confirm();
+
+                confirm
+                    .title(translations.DIALOG_TITLE_DELETE_ALL)
+                    .textContent(translations.DIALOG_CONTENT_DELETE_ALL)
+                    .ariaLabel(translations.DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS)
+                    .targetEvent(evt)
+                    .ok(translations.DIALOG_CONFIRM_DELETE_ALL)
+                    .cancel(translations.DIALOG_CANCEL_DELETE_ALL);
+
+                $mdDialog
+                    .show(confirm)
+                    .then(function () {
+                        var toast = $mdToast.simple();
+
+                        // just visually remove the tracked bookings
+                        $scope.trackedBookings = [];
+
+                        toast
+                            .textContent(translations.TOAST_DELETE_ALL)
+                            .action(translations.UNDO)
+                            .highlightAction(true)
+                            .highlightClass('md-primary')
+                            .hideDelay(TOAST_DELAY);
+
+                        $mdToast
+                            .show(toast)
+                            .then(function (response) {
+                                if (response === undefined) {
+                                    // really remove the actions from indexeddb
+                                    $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
+                                        store
+                                            .clear()
+                                            .then(updateTrackedBookings);
+                                    });
+                                } else {
+                                    updateTrackedBookings();
+                                }
+                            });
+                    });
+            });
 		};
 		
 		(function () {
-			updateTrackedActions();
+			updateTrackedBookings();
 		}());
         
-        function updateTrackedActions() {
+        function updateTrackedBookings() {
 			$indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
 				store.getAll().then(function (result) {
 					var idx;
@@ -122,28 +131,33 @@ var angular, console, moment;
 						result[idx].timestamp = moment.unix(result[idx].timestamp);
 					}
 					
-					$scope.trackedActions = result;
+					$scope.trackedBookings = result;
 				});
 			});
 		}
     }
 
     angular
-        .module('TimeTrackr (beta)', ['ngMaterial', 'indexedDB'])
+        .module('TimeTrackr (beta)', ['ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate'])
         .controller('TimeTrackrCtrl', TimeTrackrCtrl)
 		.config(function ($indexedDBProvider) {
 			$indexedDBProvider
-				.connection('TimeTrackrDB')
+				.connection(IDB_NAME)
 				.upgradeDatabase(1, function (evt, db, tx) {
-					console.log(arguments);
-					var objStore = db.createObjectStore(OBJECT_STORE_NAME, { keyPath: 'timestamp' });
+					var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
 					
 					objStore.createIndex('type_idx', 'type', { unique: false });
 					objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
 				})
 				.upgradeDatabase(2, function (evt, db, tx) {
-					db.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'setting' });
-				});
+					db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
+				})
+                .upgradeDatabase(3, function (evt, db, tx) {
+                    var objStore = db.createObjectStore('trackedBookings', { keyPath: 'timestamp' });
+                    
+                    objStore.createIndex('type_idx', 'type', { unique: false });
+					objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                });
 		})
         .config(function ($mdThemingProvider) {
 			$mdThemingProvider.definePalette('white', {
@@ -168,28 +182,43 @@ var angular, console, moment;
                 .theme('default')
                 .primaryPalette('deep-orange')
 				.accentPalette('white');
-				//.dark();
+        })
+        .config(function ($translateProvider) {
+            $translateProvider
+                .translations('en_US', {
+                    'TOAST_DELETE_SINGLE': 'Deleted booking',
+                    'TOAST_DELETE_ALL': 'Deleted all bookings.',
+                    'UNDO': 'undo',
+                    'BOOKING_COMING': 'coming',
+                    'BOOKING_LEAVING': 'leaving',
+                    'OCLOCK': 'o\'clock',
+                    'NOT_AVAILABLE': 'Not yet available!',
+                    'NO_BOOKINGS_BY_NOW': 'There are no bookings by now',
+                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Click here to delete all tracked bookings',
+                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Delete all tracked bookings',
+                    'LABEL_DELETE_ALL_BOOKINGS': 'Delete all bookings',
+                    'DIALOG_TITLE_DELETE_ALL': 'Do you really want to delete all bookings?',
+                    'DIALOG_CONTENT_DELETE_ALL': 'If you confirm this, really ALL bookings are beeing deleted!',
+                    'DIALOG_CONFIRM_DELETE_ALL': 'Yes, I do!',
+                    'DIALOG_CANCEL_DELETE_ALL': 'Maybe not'
+                })
+                .translations('de_DE', {
+                    'TOAST_DELETE_SINGLE': 'Buchung wurde gelöscht',
+                    'TOAST_DELETE_ALL': 'Alle Buchungen wurden gelöscht.',
+                    'UNDO': 'Rückgängig',
+                    'BOOKING_COMING': 'kommen',
+                    'BOOKING_LEAVING': 'gehen',
+                    'OCLOCK': 'Uhr',
+                    'NOT_AVAILABLE': 'Noch nicht verfügbar!',
+                    'NO_BOOKINGS_BY_NOW': 'Momentan sind keine aufgezeichneten Buchungen vorhanden',
+                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Klicken Sie hier, um alle aufgezeichneten Buchungen zu löschen',
+                    'LABEL_DELETE_ALL_BOOKINGS': 'Alle Buchungen löschen',
+                    'DIALOG_TITLE_DELETE_ALL': 'Möchten Sie wirklich alle Buchungen löschen?',
+                    'DIALOG_CONTENT_DELETE_ALL': 'Wenn Sie dies bestätigen, werden wirklich ALLE Buchungen gelöscht!',
+                    'DIALOG_CONFIRM_DELETE_ALL': 'Ja, ich will!',
+                    'DIALOG_CANCEL_DELETE_ALL': 'Lieber nicht.'
+                })
+                .preferredLanguage('de_DE')
+                .useSanitizeValueStrategy('sanitizeParameters');
         });
 }(angular));
-
-/* 
-    red
-    pink
-    purple
-    deep-purple
-    indigo
-    blue
-    light-blue
-    cyan
-    teal
-    green
-    light-green
-    lime
-    yellow
-    amber
-    orange
-    deep-orange
-    brown
-    grey
-    blue-grey
-*/

@@ -4,7 +4,7 @@
   "description": "The app that helps you with tracking your times at work!",
   "start_url": "./?utm_source=web_app_manifest",
   "lang": "de",
-  "display": "standalone",
+  "display": "fullscreen",
   "theme_color": "green",
   "icons": [{
     "src": "static/icons/laucher/launcher_icon_48.png",
