@@ -42,7 +42,7 @@
 								<h3>{{ booking.timestamp.format('Do MMMM YYYY, HH:mm') }} <span translate="OCLOCK" /></h3>
 								<p translate="{{ booking.type }}"></p>
 							</div>
-							<md-button class="md-secondary md-icon-button" aria-label="Edit booking">
+							<md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showEditBookingDialog($event, booking)" ng-disabled="true">
 								<md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
 							</md-button>
 							<md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteTrackedBooking(booking)">
@@ -80,6 +80,19 @@
             </md-tab>
         </md-tabs>
     </div>
+    
+    <!-- Templates -->
+    <div style="visibility: hidden">
+        <div class="md-dialog-container" id="dialogEditBooking">
+            <md-dialog layout-padding>
+                <h2 translate="DIALOG_TITLE_EDIT_BOOKING"></h2>
+                <form>
+                    
+                </form>
+            </md-dialog>
+        </div>
+    </div>
+    
     <!-- App Dependencies -->
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment-with-locales.min.js"></script>
     <!-- Angular Material requires Angular.js Libraries -->
@@ -99,7 +112,8 @@
     
 
     <!-- Angular Material Library -->
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.js"></script>
+    <!-- <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc4/angular-material.min.js"></script> -->
+    <script type="text/javascript" src="static/js/lib/angular-material.min.js"></script>
 
     <!-- Your application bootstrap  -->
     <script language="javascript" src="static/js/app.js"></script>

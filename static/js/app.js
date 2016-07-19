@@ -15,6 +15,18 @@ var angular, console, moment;
         // Predefine function names to satisfy jslint
         updateTrackedBookings;
     
+    function EditBookingDialogController($scope, $mdDialog) {
+        $scope.hide = function () {
+            $mdDialog.hide();
+        };
+        $scope.cancel = function () {
+            $mdDialog.cancel();
+        };
+        $scope.answer = function (answer) {
+            $mdDialog.hide(answer);
+        };
+    }
+    
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
         moment.locale($locale.id);
         $scope.trackedBookings = [];
@@ -116,6 +128,17 @@ var angular, console, moment;
             });
 		};
 		
+        $scope.showEditBookingDialog = function (evt, booking) {
+            console.log(EditBookingDialogController);
+            $mdDialog.show({
+                contoler: EditBookingDialogController,
+                contentElement: '#dialogEditBooking',
+                parent: angular.element(document.body),
+                targetEvent: evt,
+                clickOutsideToClose: true
+            });
+        };
+        
 		(function () {
 			updateTrackedBookings();
 		}());
@@ -136,7 +159,7 @@ var angular, console, moment;
 			});
 		}
     }
-
+    
     angular
         .module('TimeTrackr (beta)', ['ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate'])
         .controller('TimeTrackrCtrl', TimeTrackrCtrl)
@@ -200,7 +223,8 @@ var angular, console, moment;
                     'DIALOG_TITLE_DELETE_ALL': 'Do you really want to delete all bookings?',
                     'DIALOG_CONTENT_DELETE_ALL': 'If you confirm this, really ALL bookings are beeing deleted!',
                     'DIALOG_CONFIRM_DELETE_ALL': 'Yes, I do!',
-                    'DIALOG_CANCEL_DELETE_ALL': 'Maybe not'
+                    'DIALOG_CANCEL_DELETE_ALL': 'Maybe not',
+                    'DIALOG_TITLE_EDIT_BOOKING': 'Edit booking'
                 })
                 .translations('de_DE', {
                     'TOAST_DELETE_SINGLE': 'Buchung wurde gelöscht',
@@ -216,7 +240,8 @@ var angular, console, moment;
                     'DIALOG_TITLE_DELETE_ALL': 'Möchten Sie wirklich alle Buchungen löschen?',
                     'DIALOG_CONTENT_DELETE_ALL': 'Wenn Sie dies bestätigen, werden wirklich ALLE Buchungen gelöscht!',
                     'DIALOG_CONFIRM_DELETE_ALL': 'Ja, ich will!',
-                    'DIALOG_CANCEL_DELETE_ALL': 'Lieber nicht.'
+                    'DIALOG_CANCEL_DELETE_ALL': 'Lieber nicht',
+                    'DIALOG_TITLE_EDIT_BOOKING': 'Buchung bearbeiten'
                 })
                 .preferredLanguage('de_DE')
                 .useSanitizeValueStrategy('sanitizeParameters');
