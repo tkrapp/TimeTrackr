@@ -1,112 +1,6 @@
 // "import" modules to satisfy jslint
 var angular, console, moment;
 
-(function (ns) {
-    'use strict';
-    
-    ns.LocalStorage = function (keyPaths) {
-        var self = this;
-        
-        function Store(storeName) {
-            var self = this;
-            
-            self.storeName = storeName;
-            self.data = {};
-            
-            if (keyPaths.hasOwnProperty(storeName) === true) {
-                self.keyPath = keyPaths[storeName];
-            } else {
-                throw new Error('KeyPath is not defined');
-            }
-            
-            self.getAll = function () {
-                return new Promise(function (resolve, reject) {
-                    var result = [],
-                        idx, len_data, keys;
-                    
-                    self.data = getDataFromStorage();
-                    
-                    keys = Object.keys(self.data);
-                    len_data = keys.length;
-                    for (idx = 0; idx < len_data; idx += 1) {
-                        result.push(angular.copy(self.data[keys[idx]]));
-                    }
-                    
-                    resolve(result);
-                });
-            };
-            
-            self.insert = function (obj) {
-                return new Promise(function (resolve, reject) {
-                    var key = obj[self.keyPath];
-                    
-                    if (key !== undefined) {
-                        if (self.data.hasOwnProperty(key) === false) {
-                            self.data[key] = obj;
-                            
-                            writeDataToStorage(self.data);
-                            
-                            resolve(true);
-                        } else {
-                            reject(Error('Key ' + key + ' already exists'));
-                        }
-                    } else {
-                        reject(Error('Key attribute \'' + self.keyPath + '\' is undefined'));
-                    }
-                });
-            };
-            
-            self.clear = function (obj) {
-                return new Promise(function (resolve, reject) {
-                    self.data = {};
-                    
-                    writeDataToStorage(self.data);
-                    
-                    resolve(true);
-                });
-            };
-            
-            self.delete = function (key) {
-                return new Promise(function (resolve, reject) {
-                    if (key !== undefined) {
-                        if (self.data.hasOwnProperty(key) === true) {
-                            delete self.data[key]
-                            
-                            writeDataToStorage(self.data);
-                            
-                            resolve(true);
-                        } else {
-                            reject(Error('Key is not set in store'));
-                        }
-                    } else {
-                        reject(Error('Key is undefined'));
-                    }
-                });
-            };
-            
-            self.data = getDataFromStorage();
-            
-            function getDataFromStorage () {
-                return angular.fromJson(localStorage[storeName] || '{}');
-            };
-            
-            function writeDataToStorage (data) {
-                localStorage[storeName] = angular.toJson(data);
-            };
-        }
-        
-        self.openStore = function (storeName, fn) {
-            var store = new Store(storeName);
-            
-            return fn(store);
-        };
-    }
-    
-    ns.LocalStorageFactory = function (keyPaths) {
-        return new ns.LocalStorage(keyPaths);
-    };
-}(window));
-
 (function (angular) {
     'use strict';
     
@@ -136,12 +30,13 @@ var angular, console, moment;
     }
     
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
-        var storage = window.indexedDB === undefined ? $indexedDB : window.LocalStorageFactory({'TrackrConfig': 'setting', 'trackedBookings': 'timestamp'});
-        
         moment.locale($locale.id);
-        
         $scope.trackedBookings = [];
-        $scope.databaseEngine = storage instanceof window.LocalStorage ? 'LocalStorage' : 'indexedDB';
+        
+        var storage = window.indexedDB !== undefined ? $indexedDB : LocalStorage();
+        //var storage = new LocalStorage();
+        
+        $scope.databaseEngine = storage instanceof LocalStorage ? 'LocalStorage' : 'indexedDB';
         
         function updateTrackedBookings() {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
@@ -155,9 +50,6 @@ var angular, console, moment;
                     }
                     
                     $scope.trackedBookings = result;
-                    
-                    // Force ui to update
-                    $scope.$applyAsync();
                 });
             });
         }
@@ -363,6 +255,106 @@ var angular, console, moment;
                             objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
                         });
                 });
+    }
+
+    function LocalStorage () {
+        var self = this;
+        
+        self.openStore = function (storeName, fn) {
+            var store = new Store(storeName);
+            
+            return fn(store);
+        };
+        
+        function Store (storeName) {
+            var self = this;
+            
+            self.storeName = storeName;
+            self.data = {};
+            
+            if (storeName === OBJECT_STORE_NAME) {
+                self.keyPath = 'timestamp';
+            } else if (storeName === CONFIG_STORE_NAME) {
+                self.keyPath = 'setting';
+            } else {
+                throw new Error('KeyPath is not defined');
+            }
+            
+            self.getAll = function () {
+                return new Promise(function (resolve, reject) {
+                    var result = [],
+                        idx, len_data, keys;
+                    
+                    self.data = getDataFromStorage();
+                    
+                    keys = Object.keys(self.data);
+                    len_data = keys.length;
+                    for (idx = 0; idx < len_data; idx += 1) {
+                        result.push(angular.copy(self.data[keys[idx]]));
+                    }
+                    
+                    resolve(result);
+                });
+            };
+            
+            self.insert = function (obj) {
+                return new Promise(function (resolve, reject) {
+                    var key = obj[self.keyPath];
+                    
+                    if (key !== undefined) {
+                        if (self.data.hasOwnProperty(key) === false) {
+                            self.data[key] = obj;
+                            
+                            writeDataToStorage(self.data);
+                            
+                            resolve(true);
+                        } else {
+                            reject(Error('Key ' + key + ' already exists'));
+                        }
+                    } else {
+                        reject(Error('Key attribute \'' + self.keyPath + '\' is undefined'));
+                    }
+                });
+            };
+            
+            self.clear = function (obj) {
+                return new Promise(function (resolve, reject) {
+                    self.data = {};
+                    
+                    writeDataToStorage(self.data);
+                    
+                    resolve(true);
+                });
+            };
+            
+            self.delete = function (key) {
+                return new Promise(function (resolve, reject) {
+                    if (key !== undefined) {
+                        if (self.data.hasOwnProperty(key) === true) {
+                            delete self.data[key]
+                            
+                            writeDataToStorage(self.data);
+                            
+                            resolve(true);
+                        } else {
+                            reject(Error('Key is not set in store'));
+                        }
+                    } else {
+                        reject(Error('Key is undefined'));
+                    }
+                });
+            };
+            
+            self.data = getDataFromStorage();
+            
+            function getDataFromStorage () {
+                return angular.fromJson(localStorage[storeName] || '{}');
+            };
+            
+            function writeDataToStorage (data) {
+                localStorage[storeName] = angular.toJson(data);
+            };
+        }
     }
 }(angular));
 
