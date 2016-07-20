@@ -140,7 +140,7 @@ var angular, console, moment, Promise;
     }
     
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
-        var storage = window.indexedDB !== undefined ? $indexedDB : window.LocalStorageFactory({'TrackrConfig': 'setting', 'trackedBookings': 'timestamp'});
+        var storage = window.indexedDB !== undefined ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
         
         moment.locale($locale.id);
         
