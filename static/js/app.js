@@ -11,9 +11,7 @@ var angular, console, moment;
         IDX_BOOKING_TIMESTAMP = 'tstamp_idx',
         CONFIG_STORE_NAME = 'TrackrConfig',
         OBJECT_STORE_NAME = 'trackedBookings',
-        TOAST_DELAY = 3000,
-        // Predefine function names to satisfy jslint
-        updateTrackedBookings;
+        TOAST_DELAY = 3000;
     
     function EditBookingDialogController($scope, $mdDialog) {
         $scope.hide = function () {
@@ -27,12 +25,35 @@ var angular, console, moment;
         };
     }
     
+    function sort_by_timestamp_desc(a, b) {
+        return b.timestamp - a.timestamp;
+    }
+    
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
         moment.locale($locale.id);
         $scope.trackedBookings = [];
         
+        var storage = window.indexedDB !== undefined ? $indexedDB : LocalStorage();
+        //var storage = new LocalStorage();
+        
+        function updateTrackedBookings() {
+            storage.openStore(OBJECT_STORE_NAME, function (store) {
+                store.getAll().then(function (result) {
+                    var idx;
+                    
+                    result.sort(sort_by_timestamp_desc);
+                    
+                    for (idx = 0; idx < result.length; idx += 1) {
+                        result[idx].timestamp = moment.unix(result[idx].timestamp);
+                    }
+                    
+                    $scope.trackedBookings = result;
+                });
+            });
+        }
+
         $scope.trackBooking = function () {
-            $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
+            storage.openStore(OBJECT_STORE_NAME, function (store) {
                 var type =  null,
                     timestamp = moment(new Date()).seconds(0);
                 
@@ -63,7 +84,6 @@ var angular, console, moment;
                     .highlightClass('md-primary')
                     .hideDelay(TOAST_DELAY);
 
-                console.log(arguments);
                 if (idx >= 0) {
                     $scope.trackedBookings.splice(idx, 1);
 
@@ -72,8 +92,8 @@ var angular, console, moment;
                         .then(function (response) {
                             // UNDO pressed
                             if (response === undefined) {
-                                $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
-                                    store['delete'](booking.timestamp.unix());
+                                storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                    store.delete(booking.timestamp.unix());
                                 });
                             } else {
                                 updateTrackedBookings();
@@ -114,8 +134,8 @@ var angular, console, moment;
                             .show(toast)
                             .then(function (response) {
                                 if (response === undefined) {
-                                    // really remove the actions from indexeddb
-                                    $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
+                                    // really remove the bookings from indexeddb
+                                    storage.openStore(OBJECT_STORE_NAME, function (store) {
                                         store
                                             .clear()
                                             .then(updateTrackedBookings);
@@ -127,9 +147,8 @@ var angular, console, moment;
                     });
             });
         };
-        
+
         $scope.showEditBookingDialog = function (evt, booking) {
-            console.log(EditBookingDialogController);
             $mdDialog.show({
                 contoler: EditBookingDialogController,
                 contentElement: '#dialogEditBooking',
@@ -138,74 +157,15 @@ var angular, console, moment;
                 clickOutsideToClose: true
             });
         };
-        
+
         (function () {
             updateTrackedBookings();
         }());
-        
-        function updateTrackedBookings() {
-            $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
-                store.getAll().then(function (result) {
-                    var idx;
-                    
-                    result.sort(function (a, b) { return b.timestamp - a.timestamp; });
-                    
-                    for (idx = 0; idx < result.length; idx += 1) {
-                        result[idx].timestamp = moment.unix(result[idx].timestamp);
-                    }
-                    
-                    $scope.trackedBookings = result;
-                });
-            });
-        }
     }
-    try {
+    
     angular
         .module('TimeTrackr', ['ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate'])
         .controller('TimeTrackrCtrl', TimeTrackrCtrl)
-        .config(function ($indexedDBProvider) {
-            $indexedDBProvider
-                .connection(IDB_NAME)
-                .upgradeDatabase(1, function (evt, db, tx) {
-                    var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
-                    
-                    objStore.createIndex('type_idx', 'type', { unique: false });
-                    objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
-                })
-                .upgradeDatabase(2, function (evt, db, tx) {
-                    db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
-                })
-                .upgradeDatabase(3, function (evt, db, tx) {
-                    var objStore = db.createObjectStore('trackedBookings', { keyPath: 'timestamp' });
-                    
-                    objStore.createIndex('type_idx', 'type', { unique: false });
-                    objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
-                });
-        })
-        .config(function ($mdThemingProvider) {
-            $mdThemingProvider.definePalette('white', {
-                '50': 'ffffff',
-                '100': 'ffffff',
-                '200': 'ffffff',
-                '300': 'ffffff',
-                '400': 'ffffff',
-                '500': 'ffffff',
-                '600': 'ffffff',
-                '700': 'ffffff',
-                '800': 'ffffff',
-                '900': 'ffffff',
-                'A100': 'ffffff',
-                'A200': 'ffffff',
-                'A400': 'ffffff',
-                'A700': 'ffffff',
-                'contrastDefaultColor': 'dark'
-            });
-            
-            $mdThemingProvider
-                .theme('default')
-                .primaryPalette('deep-orange')
-                .accentPalette('white');
-        })
         .config(function ($translateProvider) {
             $translateProvider
                 .translations('en_US', {
@@ -245,8 +205,179 @@ var angular, console, moment;
                 })
                 .preferredLanguage('de_DE')
                 .useSanitizeValueStrategy('sanitizeParameters');
+        })
+        .config(function ($mdThemingProvider) {
+            $mdThemingProvider.definePalette('white', {
+                '50': 'ffffff',
+                '100': 'ffffff',
+                '200': 'ffffff',
+                '300': 'ffffff',
+                '400': 'ffffff',
+                '500': 'ffffff',
+                '600': 'ffffff',
+                '700': 'ffffff',
+                '800': 'ffffff',
+                '900': 'ffffff',
+                'A100': 'ffffff',
+                'A200': 'ffffff',
+                'A400': 'ffffff',
+                'A700': 'ffffff',
+                'contrastDefaultColor': 'dark'
+            });
+            
+            $mdThemingProvider
+                .theme('default')
+                .primaryPalette('deep-orange')
+                .accentPalette('white');
         });
-    } catch (e) {
-        alert(e);
+
+    if (window.indexedDB !== undefined) {
+        angular
+            .module('TimeTrackr')
+                .config(function ($indexedDBProvider) {
+                    $indexedDBProvider
+                        .connection(IDB_NAME)
+                        .upgradeDatabase(1, function (evt, db, tx) {
+                            var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
+                            
+                            objStore.createIndex('type_idx', 'type', { unique: false });
+                            objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                        })
+                        .upgradeDatabase(2, function (evt, db, tx) {
+                            db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
+                        })
+                        .upgradeDatabase(3, function (evt, db, tx) {
+                            var objStore = db.createObjectStore('trackedBookings', { keyPath: 'timestamp' });
+                            
+                            objStore.createIndex('type_idx', 'type', { unique: false });
+                            objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                        });
+                });
+    }
+
+    function LocalStorage () {
+        var self = this;
+        
+        self.openStore = function (storeName, fn) {
+            var store = new Store(storeName);
+            
+            return fn(store);
+        };
+        
+        function Store (storeName) {
+            var self = this;
+            
+            self.storeName = storeName;
+            self.data = {};
+            
+            if (storeName === OBJECT_STORE_NAME) {
+                self.keyPath = 'timestamp';
+            } else if (storeName === CONFIG_STORE_NAME) {
+                self.keyPath = 'setting';
+            } else {
+                throw new Error('KeyPath is not defined');
+            }
+            
+            self.getAll = function () {
+                return new Promise(function (resolve, reject) {
+                    var result = [],
+                        idx, len_data, keys;
+                    
+                    self.data = getDataFromStorage();
+                    
+                    keys = Object.keys(self.data);
+                    len_data = keys.length;
+                    for (idx = 0; idx < len_data; idx += 1) {
+                        result.push(angular.copy(self.data[keys[idx]]));
+                    }
+                    
+                    resolve(result);
+                });
+            };
+            
+            self.insert = function (obj) {
+                return new Promise(function (resolve, reject) {
+                    var key = obj[self.keyPath];
+                    
+                    if (key !== undefined) {
+                        if (self.data.hasOwnProperty(key) === false) {
+                            self.data[key] = obj;
+                            
+                            writeDataToStorage(self.data);
+                            
+                            resolve(true);
+                        } else {
+                            reject(Error('Key ' + key + ' already exists'));
+                        }
+                    } else {
+                        reject(Error('Key attribute \'' + self.keyPath + '\' is undefined'));
+                    }
+                });
+            };
+            
+            self.clear = function (obj) {
+                return new Promise(function (resolve, reject) {
+                    self.data = {};
+                    
+                    writeDataToStorage(self.data);
+                    
+                    resolve(true);
+                });
+            };
+            
+            self.delete = function (key) {
+                return new Promise(function (resolve, reject) {
+                    if (key !== undefined) {
+                        if (self.data.hasOwnProperty(key) === true) {
+                            delete self.data[key]
+                            
+                            writeDataToStorage(self.data);
+                            
+                            resolve(true);
+                        } else {
+                            reject(Error('Key is not set in store'));
+                        }
+                    } else {
+                        reject(Error('Key is undefined'));
+                    }
+                });
+            };
+            
+            self.data = getDataFromStorage();
+            
+            function getDataFromStorage () {
+                return angular.fromJson(localStorage[storeName] || '{}');
+            };
+            
+            function writeDataToStorage (data) {
+                localStorage[storeName] = angular.toJson(data);
+            };
+        }
     }
 }(angular));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
