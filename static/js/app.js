@@ -407,23 +407,28 @@ var angular, console, moment, Promise;
         local_storage_version = angular.fromJson(localStorage[LOCAL_STORAGE_VERSION_KEY] || '0');
         
         if (local_storage_version < 1) {
+            console.log('Upgrading LocalStorage from 0 to 1');
             local_storage_version += 1;
             localStorage.setItem('trackedActions', angular.toJson(angular.fromJson(localStorage.getItem('trackedActions') || {})));
         }
         if (local_storage_version < 2) {
+            console.log('Upgrading LocalStorage from 1 to 2');
             local_storage_version += 1;
             localStorage.setItem('TrackrConfig', angular.toJson(angular.fromJson(localStorage.getItem('TrackrConfig') || {})));
         }
         if (local_storage_version < 3) {
+            console.log('Upgrading LocalStorage from 2 to 3');
             local_storage_version += 1;
             localStorage.setItem('trackedBookings', angular.toJson(angular.fromJson(localStorage.getItem('trackedBookings') || {})));
         }
         if (local_storage_version < 4) {
+            console.log('Upgrading LocalStorage from 3 to 4');
             local_storage_version += 1;
             localStorage.setItem('bookings', localStorage.getItem('trackedBookings'));
             localStorage.setItem('config', localStorage.getItem('TrackrConfig'));
         }
         if (local_storage_version < 5) {
+            console.log('Upgrading LocalStorage from 4 to 5');
             local_storage_version += 1;
             localStorage.removeItem('trackedBookings');
             localStorage.removeItem('trackedActions');
