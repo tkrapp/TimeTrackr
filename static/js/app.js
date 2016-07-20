@@ -117,9 +117,11 @@ var angular, console, moment, Promise;
         IDB_NAME = 'TimeTrackrDB',
         IDX_BOOKING_TYPE = 'type_idx',
         IDX_BOOKING_TIMESTAMP = 'tstamp_idx',
-        CONFIG_STORE_NAME = 'TrackrConfig',
-        OBJECT_STORE_NAME = 'trackedBookings',
-        TOAST_DELAY = 3000;
+        CONFIG_STORE_NAME = 'config',
+        OBJECT_STORE_NAME = 'bookings',
+        TOAST_DELAY = 3000,
+        LOCAL_STORAGE_VERSION_KEY = 'TimeTrackrDBVersion',
+        local_storage_version;
     
     function EditBookingDialogController($scope, $mdDialog) {
         $scope.hide = function () {
@@ -138,14 +140,14 @@ var angular, console, moment, Promise;
     }
     
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
-        var storage = window.indexedDB === undefined ? $indexedDB : window.LocalStorageFactory({'TrackrConfig': 'setting', 'trackedBookings': 'timestamp'});
+        var storage = window.indexedDB !== undefined ? $indexedDB : window.LocalStorageFactory({'TrackrConfig': 'setting', 'trackedBookings': 'timestamp'});
         
         moment.locale($locale.id);
         
-        $scope.trackedBookings = [];
+        $scope.bookings = [];
         $scope.databaseEngine = storage instanceof window.LocalStorage ? 'LocalStorage' : 'indexedDB';
         
-        function updateTrackedBookings() {
+        function updateBookings() {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 store.getAll().then(function (result) {
                     var idx;
@@ -156,7 +158,7 @@ var angular, console, moment, Promise;
                         result[idx].timestamp = moment.unix(result[idx].timestamp);
                     }
                     
-                    $scope.trackedBookings = result;
+                    $scope.bookings = result;
                     
                     // Force ui to update
                     $scope.$applyAsync();
@@ -169,7 +171,7 @@ var angular, console, moment, Promise;
                 var type =  null,
                     timestamp = moment(new Date()).seconds(0);
                 
-                if ($scope.trackedBookings.length === 0 || $scope.trackedBookings[0].type === BOOKING_LEAVING) {
+                if ($scope.bookings.length === 0 || $scope.bookings[0].type === BOOKING_LEAVING) {
                     type = BOOKING_COMING;
                 } else {
                     type = BOOKING_LEAVING;
@@ -180,13 +182,13 @@ var angular, console, moment, Promise;
                         'type': type,
                         'timestamp': timestamp.unix()
                     })
-                    .then(updateTrackedBookings);
+                    .then(updateBookings);
             });
         };
         
-        $scope.deleteTrackedBooking = function (booking) {
+        $scope.deleteBooking = function (booking) {
             $translate(['TOAST_DELETE_SINGLE', 'UNDO']).then(function (translations) {
-                var idx = $scope.trackedBookings.indexOf(booking),
+                var idx = $scope.bookings.indexOf(booking),
                     toast = $mdToast.simple();
 
                 toast
@@ -197,7 +199,7 @@ var angular, console, moment, Promise;
                     .hideDelay(TOAST_DELAY);
 
                 if (idx >= 0) {
-                    $scope.trackedBookings.splice(idx, 1);
+                    $scope.bookings.splice(idx, 1);
 
                     $mdToast
                         .show(toast)
@@ -208,14 +210,14 @@ var angular, console, moment, Promise;
                                     store.delete(booking.timestamp.unix());
                                 });
                             } else {
-                                updateTrackedBookings();
+                                updateBookings();
                             }
                         });
                 }
             });
         };
         
-        $scope.deleteAllTrackedBookings = function (evt) {
+        $scope.deleteAllBookings = function (evt) {
             $translate(['TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL', 'DIALOG_CONTENT_DELETE_ALL', 'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS', 'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO']).then(function (translations) {
                 var confirm = $mdDialog.confirm();
 
@@ -232,8 +234,8 @@ var angular, console, moment, Promise;
                     .then(function () {
                         var toast = $mdToast.simple();
 
-                        // just visually remove the tracked bookings
-                        $scope.trackedBookings = [];
+                        // just visually remove the bookings
+                        $scope.bookings = [];
 
                         toast
                             .textContent(translations.TOAST_DELETE_ALL)
@@ -250,10 +252,10 @@ var angular, console, moment, Promise;
                                     storage.openStore(OBJECT_STORE_NAME, function (store) {
                                         store
                                             .clear()
-                                            .then(updateTrackedBookings);
+                                            .then(updateBookings);
                                     });
                                 } else {
-                                    updateTrackedBookings();
+                                    updateBookings();
                                 }
                             });
                     });
@@ -271,7 +273,7 @@ var angular, console, moment, Promise;
         };
 
         (function () {
-            updateTrackedBookings();
+            updateBookings();
         }());
     }
     
@@ -363,8 +365,72 @@ var angular, console, moment, Promise;
 
                         objStore.createIndex('type_idx', 'type', { unique: false });
                         objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                    })
+                    .upgradeDatabase(4, function (evt, db, tx) {
+                        var bookings = db.createObjectStore('bookings', { keyPath: 'timestamp' }),
+                            config = db.createObjectStore('config', { keyPath: 'setting' }),
+                            TrackrConfig = tx.objectStore('TrackrConfig'),
+                            trackedBookings = tx.objectStore('trackedBookings');
+                        
+                        bookings.createIndex('type_idx', 'type', { unique: false });
+                        bookings.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                        
+                        trackedBookings
+                            .getAll()
+                            .onsuccess = function (evt) {
+                                var result = evt.target.result,
+                                    idx;
+                                
+                                for (idx = 0; idx < result.length; idx += 1) {
+                                    bookings.add(result[idx]);
+                                }
+                            };
+                        
+                        TrackrConfig
+                            .getAll()
+                            .onsuccess = function (evt) {
+                                var result = evt.target.result,
+                                    idx;
+                                
+                                for (idx = 0; idx < result.length; idx += 1) {
+                                    config.add(result[idx]);
+                                }
+                            };
+                    })
+                    .upgradeDatabase(5, function (evt, db, tx) {
+                        db.deleteObjectStore('TrackrConfig');
+                        db.deleteObjectStore('trackedBookings');
+                        db.deleteObjectStore('trackedActions');
                     });
             });
+    } else {
+        local_storage_version = angular.fromJson(localStorage[LOCAL_STORAGE_VERSION_KEY] || '0');
+        
+        if (local_storage_version < 1) {
+            local_storage_version += 1;
+            localStorage.setItem('trackedActions', angular.toJson(angular.fromJson(localStorage.getItem('trackedActions') || {})));
+        }
+        if (local_storage_version < 2) {
+            local_storage_version += 1;
+            localStorage.setItem('TrackrConfig', angular.toJson(angular.fromJson(localStorage.getItem('TrackrConfig') || {})));
+        }
+        if (local_storage_version < 3) {
+            local_storage_version += 1;
+            localStorage.setItem('trackedBookings', angular.toJson(angular.fromJson(localStorage.getItem('trackedBookings') || {})));
+        }
+        if (local_storage_version < 4) {
+            local_storage_version += 1;
+            localStorage.setItem('bookings', localStorage.getItem('trackedBookings'));
+            localStorage.setItem('config', localStorage.getItem('TrackrConfig'));
+        }
+        if (local_storage_version < 5) {
+            local_storage_version += 1;
+            localStorage.removeItem('trackedBookings');
+            localStorage.removeItem('trackedActions');
+            localStorage.removeItem('TrackrConfig');
+        }
+        
+        localStorage[LOCAL_STORAGE_VERSION_KEY] = angular.toJson(local_storage_version);
     }
 }(angular));
 

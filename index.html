@@ -44,7 +44,7 @@
                 <md-tab-body>
                     <md-list class="list-tracking">
                         <!-- <md-subheader>Tracked Bookings</md-subheader> -->
-                        <md-list-item class="md-2-line secondary-button-padding" ng-repeat="booking in trackedBookings">
+                        <md-list-item class="md-2-line secondary-button-padding" ng-repeat="booking in bookings">
                             <div class="md-list-item-text">
                                 <h3>{{ booking.timestamp.format('dd Do MMM YYYY, HH:mm') }} <span translate="OCLOCK" /></h3>
                                 <p translate="{{ booking.type }}"></p>
@@ -52,11 +52,11 @@
                             <md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showEditBookingDialog($event, booking)" ng-disabled="true">
                                 <md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
                             </md-button>
-                            <md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteTrackedBooking(booking)">
+                            <md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteBooking(booking)">
                                 <md-icon md-svg-icon="static/icons/delete_blk.svg"></md-icon>
                             </md-button>
                         </md-list-item>
-                        <md-list-item ng-if="trackedBookings.length === 0">
+                        <md-list-item ng-if="bookings.length === 0">
                             <p translate="NO_BOOKINGS_BY_NOW"></p>
                         </md-list-item>
                     </md-list>
@@ -76,9 +76,9 @@
                 </md-tab-label>
                 <md-tab-body>
                     <md-list>
-                        <md-list-item class="secondary-button-padding" ng-click="deleteAllTrackedBookings($event)">
+                        <md-list-item class="secondary-button-padding" ng-click="deleteAllBookings($event)">
                             <p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
-                            <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ LABEL_ARIA_DELETE_ALL_BOOKINGS | translate }}" ng-click="deleteAllTrackedBookings($event)">
+                            <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ LABEL_ARIA_DELETE_ALL_BOOKINGS | translate }}" ng-click="deleteAllBookings($event)">
                                 <md-icon md-svg-icon="static/icons/delete_blk.svg" />
                             </md-button>
                         </md-list-item>
