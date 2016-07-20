@@ -16,9 +16,9 @@
    version="1.1"
    inkscape:version="0.91 r13725"
    sodipodi:docname="icon_timetrackr.svg"
-   inkscape:export-filename="/home/thomas/git/timetrackr/static/icons/launcher/launcher_icon_192.png"
-   inkscape:export-xdpi="240"
-   inkscape:export-ydpi="240">
+   inkscape:export-filename="/home/thomas/git/timetrackr/static/icons/launcher/launcher_icon_512.png"
+   inkscape:export-xdpi="640"
+   inkscape:export-ydpi="640">
   <defs
      id="defs4">
     <filter
@@ -222,8 +222,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="7.9195959"
-     inkscape:cx="-15.581216"
-     inkscape:cy="27.051071"
+     inkscape:cx="38.728882"
+     inkscape:cy="33.364525"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -231,7 +231,7 @@
      width="72px"
      inkscape:window-width="1920"
      inkscape:window-height="1031"
-     inkscape:window-x="1920"
+     inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="1" />
   <metadata
