@@ -1,5 +1,5 @@
 // "import" modules to satisfy jslint
-var angular, console, moment;
+var angular, console, moment, Promise;
 
 (function (ns) {
     'use strict';
@@ -9,6 +9,14 @@ var angular, console, moment;
         
         function Store(storeName) {
             var self = this;
+            
+            function getDataFromStorage() {
+                return angular.fromJson(localStorage[storeName] || '{}');
+            }
+            
+            function writeDataToStorage(data) {
+                localStorage[storeName] = angular.toJson(data);
+            }
             
             self.storeName = storeName;
             self.data = {};
@@ -22,7 +30,9 @@ var angular, console, moment;
             self.getAll = function () {
                 return new Promise(function (resolve, reject) {
                     var result = [],
-                        idx, len_data, keys;
+                        idx,
+                        len_data,
+                        keys;
                     
                     self.data = getDataFromStorage();
                     
@@ -48,10 +58,10 @@ var angular, console, moment;
                             
                             resolve(true);
                         } else {
-                            reject(Error('Key ' + key + ' already exists'));
+                            reject(new Error('Key ' + key + ' already exists'));
                         }
                     } else {
-                        reject(Error('Key attribute \'' + self.keyPath + '\' is undefined'));
+                        reject(new Error('Key attribute \'' + self.keyPath + '\' is undefined'));
                     }
                 });
             };
@@ -70,29 +80,21 @@ var angular, console, moment;
                 return new Promise(function (resolve, reject) {
                     if (key !== undefined) {
                         if (self.data.hasOwnProperty(key) === true) {
-                            delete self.data[key]
+                            delete self.data[key];
                             
                             writeDataToStorage(self.data);
                             
                             resolve(true);
                         } else {
-                            reject(Error('Key is not set in store'));
+                            reject(new Error('Key is not set in store'));
                         }
                     } else {
-                        reject(Error('Key is undefined'));
+                        reject(new Error('Key is undefined'));
                     }
                 });
             };
             
             self.data = getDataFromStorage();
-            
-            function getDataFromStorage () {
-                return angular.fromJson(localStorage[storeName] || '{}');
-            };
-            
-            function writeDataToStorage (data) {
-                localStorage[storeName] = angular.toJson(data);
-            };
         }
         
         self.openStore = function (storeName, fn) {
@@ -100,7 +102,7 @@ var angular, console, moment;
             
             return fn(store);
         };
-    }
+    };
     
     ns.LocalStorageFactory = function (keyPaths) {
         return new ns.LocalStorage(keyPaths);
@@ -344,25 +346,25 @@ var angular, console, moment;
     if (window.indexedDB !== undefined) {
         angular
             .module('TimeTrackr')
-                .config(function ($indexedDBProvider) {
-                    $indexedDBProvider
-                        .connection(IDB_NAME)
-                        .upgradeDatabase(1, function (evt, db, tx) {
-                            var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
-                            
-                            objStore.createIndex('type_idx', 'type', { unique: false });
-                            objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
-                        })
-                        .upgradeDatabase(2, function (evt, db, tx) {
-                            db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
-                        })
-                        .upgradeDatabase(3, function (evt, db, tx) {
-                            var objStore = db.createObjectStore('trackedBookings', { keyPath: 'timestamp' });
-                            
-                            objStore.createIndex('type_idx', 'type', { unique: false });
-                            objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
-                        });
-                });
+            .config(function ($indexedDBProvider) {
+                $indexedDBProvider
+                    .connection(IDB_NAME)
+                    .upgradeDatabase(1, function (evt, db, tx) {
+                        var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
+
+                        objStore.createIndex('type_idx', 'type', { unique: false });
+                        objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                    })
+                    .upgradeDatabase(2, function (evt, db, tx) {
+                        db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
+                    })
+                    .upgradeDatabase(3, function (evt, db, tx) {
+                        var objStore = db.createObjectStore('trackedBookings', { keyPath: 'timestamp' });
+
+                        objStore.createIndex('type_idx', 'type', { unique: false });
+                        objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                    });
+            });
     }
 }(angular));
 
