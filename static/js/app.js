@@ -3,15 +3,15 @@ var angular, console, moment;
 
 (function (angular) {
     'use strict';
-	
+    
     var BOOKING_COMING = 'BOOKING_COMING',
         BOOKING_LEAVING = 'BOOKING_LEAVING',
         IDB_NAME = 'TimeTrackrDB',
         IDX_BOOKING_TYPE = 'type_idx',
         IDX_BOOKING_TIMESTAMP = 'tstamp_idx',
-		CONFIG_STORE_NAME = 'TrackrConfig',
-		OBJECT_STORE_NAME = 'trackedBookings',
-		TOAST_DELAY = 3000,
+        CONFIG_STORE_NAME = 'TrackrConfig',
+        OBJECT_STORE_NAME = 'trackedBookings',
+        TOAST_DELAY = 3000,
         // Predefine function names to satisfy jslint
         updateTrackedBookings;
     
@@ -32,26 +32,26 @@ var angular, console, moment;
         $scope.trackedBookings = [];
         
         $scope.trackBooking = function () {
-			$indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
-				var type =  null,
-					timestamp = moment(new Date()).seconds(0);
-				
-				if ($scope.trackedBookings.length === 0 || $scope.trackedBookings[0].type === BOOKING_LEAVING) {
-					type = BOOKING_COMING;
-				} else {
-					type = BOOKING_LEAVING;
-				}
-				
-				store
-					.insert({
-						'type': type,
-						'timestamp': timestamp.unix()
-					})
-					.then(updateTrackedBookings);
-			});
+            $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
+                var type =  null,
+                    timestamp = moment(new Date()).seconds(0);
+                
+                if ($scope.trackedBookings.length === 0 || $scope.trackedBookings[0].type === BOOKING_LEAVING) {
+                    type = BOOKING_COMING;
+                } else {
+                    type = BOOKING_LEAVING;
+                }
+                
+                store
+                    .insert({
+                        'type': type,
+                        'timestamp': timestamp.unix()
+                    })
+                    .then(updateTrackedBookings);
+            });
         };
-		
-		$scope.deleteTrackedBooking = function (booking) {
+        
+        $scope.deleteTrackedBooking = function (booking) {
             $translate(['TOAST_DELETE_SINGLE', 'UNDO']).then(function (translations) {
                 var idx = $scope.trackedBookings.indexOf(booking),
                     toast = $mdToast.simple();
@@ -81,9 +81,9 @@ var angular, console, moment;
                         });
                 }
             });
-		};
-		
-		$scope.deleteAllTrackedBookings = function (evt) {
+        };
+        
+        $scope.deleteAllTrackedBookings = function (evt) {
             $translate(['TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL', 'DIALOG_CONTENT_DELETE_ALL', 'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS', 'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO']).then(function (translations) {
                 var confirm = $mdDialog.confirm();
 
@@ -126,8 +126,8 @@ var angular, console, moment;
                             });
                     });
             });
-		};
-		
+        };
+        
         $scope.showEditBookingDialog = function (evt, booking) {
             console.log(EditBookingDialogController);
             $mdDialog.show({
@@ -139,72 +139,72 @@ var angular, console, moment;
             });
         };
         
-		(function () {
-			updateTrackedBookings();
-		}());
+        (function () {
+            updateTrackedBookings();
+        }());
         
         function updateTrackedBookings() {
-			$indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
-				store.getAll().then(function (result) {
-					var idx;
-					
-					result.sort(function (a, b) { return b.timestamp - a.timestamp; });
-					
-					for (idx = 0; idx < result.length; idx += 1) {
-						result[idx].timestamp = moment.unix(result[idx].timestamp);
-					}
-					
-					$scope.trackedBookings = result;
-				});
-			});
-		}
+            $indexedDB.openStore(OBJECT_STORE_NAME, function (store) {
+                store.getAll().then(function (result) {
+                    var idx;
+                    
+                    result.sort(function (a, b) { return b.timestamp - a.timestamp; });
+                    
+                    for (idx = 0; idx < result.length; idx += 1) {
+                        result[idx].timestamp = moment.unix(result[idx].timestamp);
+                    }
+                    
+                    $scope.trackedBookings = result;
+                });
+            });
+        }
     }
-    
+    try {
     angular
-        .module('TimeTrackr (beta)', ['ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate'])
+        .module('TimeTrackr', ['ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate'])
         .controller('TimeTrackrCtrl', TimeTrackrCtrl)
-		.config(function ($indexedDBProvider) {
-			$indexedDBProvider
-				.connection(IDB_NAME)
-				.upgradeDatabase(1, function (evt, db, tx) {
-					var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
-					
-					objStore.createIndex('type_idx', 'type', { unique: false });
-					objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
-				})
-				.upgradeDatabase(2, function (evt, db, tx) {
-					db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
-				})
+        .config(function ($indexedDBProvider) {
+            $indexedDBProvider
+                .connection(IDB_NAME)
+                .upgradeDatabase(1, function (evt, db, tx) {
+                    var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
+                    
+                    objStore.createIndex('type_idx', 'type', { unique: false });
+                    objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                })
+                .upgradeDatabase(2, function (evt, db, tx) {
+                    db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
+                })
                 .upgradeDatabase(3, function (evt, db, tx) {
                     var objStore = db.createObjectStore('trackedBookings', { keyPath: 'timestamp' });
                     
                     objStore.createIndex('type_idx', 'type', { unique: false });
-					objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                    objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
                 });
-		})
+        })
         .config(function ($mdThemingProvider) {
-			$mdThemingProvider.definePalette('white', {
-				'50': 'ffffff',
-				'100': 'ffffff',
-				'200': 'ffffff',
-				'300': 'ffffff',
-				'400': 'ffffff',
-				'500': 'ffffff',
-				'600': 'ffffff',
-				'700': 'ffffff',
-				'800': 'ffffff',
-				'900': 'ffffff',
-				'A100': 'ffffff',
-				'A200': 'ffffff',
-				'A400': 'ffffff',
-				'A700': 'ffffff',
-				'contrastDefaultColor': 'dark'
-			});
-			
+            $mdThemingProvider.definePalette('white', {
+                '50': 'ffffff',
+                '100': 'ffffff',
+                '200': 'ffffff',
+                '300': 'ffffff',
+                '400': 'ffffff',
+                '500': 'ffffff',
+                '600': 'ffffff',
+                '700': 'ffffff',
+                '800': 'ffffff',
+                '900': 'ffffff',
+                'A100': 'ffffff',
+                'A200': 'ffffff',
+                'A400': 'ffffff',
+                'A700': 'ffffff',
+                'contrastDefaultColor': 'dark'
+            });
+            
             $mdThemingProvider
                 .theme('default')
                 .primaryPalette('deep-orange')
-				.accentPalette('white');
+                .accentPalette('white');
         })
         .config(function ($translateProvider) {
             $translateProvider
@@ -246,4 +246,7 @@ var angular, console, moment;
                 .preferredLanguage('de_DE')
                 .useSanitizeValueStrategy('sanitizeParameters');
         });
+    } catch (e) {
+        alert(e);
+    }
 }(angular));

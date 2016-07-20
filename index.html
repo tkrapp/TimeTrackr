@@ -5,77 +5,84 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="description" content="" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic" />
     <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css" />
     <link rel="stylesheet" href="static/css/app.css" />
-	<link rel="manifest" href="timetrackr.manifest.json" />
-    <link rel="shortcut icon" href="static/icons/launcher/launcher_icon_72.png" />
-    <link rel="apple-itouch-icon" href="static/icons/launcher/launcher_icon_192.png" />
-</head>
     
-<body ng-app="TimeTrackr (beta)">
+    <!-- Standard Webapp Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#FF5722" />
+    <link rel="manifest" href="timetrackr.manifest.json" />
+    <link rel="shortcut icon" href="static/icons/launcher/launcher_icon_72.png" />
+    
+    <!-- Apple Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_192.png" sixes="192x192" />
+    <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_256.png" sixes="256x256" />
+    <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_384.png" sixes="384x384" />
+    <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_512.png" sixes="512x512" />
+</head>
+
+<body ng-app="TimeTrackr">
     <div id="app-container" layout="column" layout-fill ng-cloak ng-controller="TimeTrackrCtrl">
         <md-toolbar class="site-content-toolbar">
             <div class="md-toolbar-tools">
                 <span>TimeTrackr</span>
             </div>
         </md-toolbar>
-		<md-button class="add-booking md-fab md-fab-bottom-right md-primary" aria-label="Track Booking" ng-click="trackBooking()" ng-class="{ visible: selectedTab==0 }">
-			<md-icon md-svg-icon="static/icons/add.svg"></md-icon>
-		</md-button>
-        <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" >
+        <md-button class="add-booking md-fab md-fab-bottom-right md-primary" aria-label="Track Booking" ng-click="trackBooking()" ng-class="{ visible: selectedTab==0 }">
+            <md-icon md-svg-icon="static/icons/add.svg"></md-icon>
+        </md-button>
+        <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="true">
             <md-tab layout="column" id="tab-tracking" class="md-primary">
                 <md-tab-label>
-					<md-icon md-svg-icon="static/icons/timer.svg"></md-icon>
-				</md-tab-label>
+                    <md-icon md-svg-icon="static/icons/timer.svg"></md-icon>
+                </md-tab-label>
                 <md-tab-body>
                     <md-list class="list-tracking">
                         <!-- <md-subheader>Tracked Bookings</md-subheader> -->
                         <md-list-item class="md-2-line secondary-button-padding" ng-repeat="booking in trackedBookings">
-							<div class="md-list-item-text">
-								<h3>{{ booking.timestamp.format('Do MMMM YYYY, HH:mm') }} <span translate="OCLOCK" /></h3>
-								<p translate="{{ booking.type }}"></p>
-							</div>
-							<md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showEditBookingDialog($event, booking)" ng-disabled="true">
-								<md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
-							</md-button>
-							<md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteTrackedBooking(booking)">
-								<md-icon md-svg-icon="static/icons/delete_blk.svg"></md-icon>
-							</md-button>
+                            <div class="md-list-item-text">
+                                <h3>{{ booking.timestamp.format('dd Do MMM YYYY, HH:mm') }} <span translate="OCLOCK" /></h3>
+                                <p translate="{{ booking.type }}"></p>
+                            </div>
+                            <md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showEditBookingDialog($event, booking)" ng-disabled="true">
+                                <md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
+                            </md-button>
+                            <md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteTrackedBooking(booking)">
+                                <md-icon md-svg-icon="static/icons/delete_blk.svg"></md-icon>
+                            </md-button>
                         </md-list-item>
-						<md-list-item ng-if="trackedBookings.length === 0">
-							<p translate="NO_BOOKINGS_BY_NOW"></p>
-						</md-list-item>
+                        <md-list-item ng-if="trackedBookings.length === 0">
+                            <p translate="NO_BOOKINGS_BY_NOW"></p>
+                        </md-list-item>
                     </md-list>
                 </md-tab-body>
             </md-tab>
             <md-tab id="tab-timetable">
                 <md-tab-label class="md-primary" aria-label="Timetable">
-					<md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
-				</md-tab-label>
+                    <md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
+                </md-tab-label>
                 <md-tab-body>
                     <md-content class="md-padding" translate="NOT_AVAILABLE"></md-content>
                 </md-tab-body>
             </md-tab>
-			<md-tab id="tab-settings">
+            <md-tab id="tab-settings">
                 <md-tab-label>
-					<md-icon md-svg-icon="static/icons/settings.svg"></md-icon>
-				</md-tab-label>
+                    <md-icon md-svg-icon="static/icons/settings.svg"></md-icon>
+                </md-tab-label>
                 <md-tab-body>
                     <md-list>
-						<md-list-item class="secondary-button-padding" ng-click="deleteAllTrackedBookings($event)">
-							<p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
-							<md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ LABEL_ARIA_DELETE_ALL_BOOKINGS | translate }}" ng-click="deleteAllTrackedBookings($event)">
-								<md-icon md-svg-icon="static/icons/delete_blk.svg" />
-							</md-button>
-						</md-list-item>
-					</md-list>
+                        <md-list-item class="secondary-button-padding" ng-click="deleteAllTrackedBookings($event)">
+                            <p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
+                            <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ LABEL_ARIA_DELETE_ALL_BOOKINGS | translate }}" ng-click="deleteAllTrackedBookings($event)">
+                                <md-icon md-svg-icon="static/icons/delete_blk.svg" />
+                            </md-button>
+                        </md-list-item>
+                    </md-list>
                 </md-tab-body>
             </md-tab>
         </md-tabs>
@@ -94,23 +101,22 @@
     </div>
     
     <!-- App Dependencies -->
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment-with-locales.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment-with-locales.min.js"></script>
     <!-- Angular Material requires Angular.js Libraries -->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-animate.min.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-aria.min.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-messages.min.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-sanitize.js"></script>
-	
+    
     <!-- Angular.js Locales -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-i18n/1.5.7/angular-locale_de-de.min.js"></script>
     <!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-i18n/1.5.7/angular-locale_en-us.js"></script> -->
     
-	<!-- Angular.js Addons -->
-	<script type="text/javascript" src="static/js/lib/indexeddb.js"></script>
+    <!-- Angular.js Addons -->
+    <script type="text/javascript" src="static/js/lib/indexeddb.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-translate/2.11.0/angular-translate.min.js"></script>
     
-
     <!-- Angular Material Library -->
     <!-- <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc4/angular-material.min.js"></script> -->
     <script type="text/javascript" src="static/js/lib/angular-material.min.js"></script>
