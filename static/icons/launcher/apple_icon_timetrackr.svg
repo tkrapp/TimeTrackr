@@ -17,9 +17,9 @@
    id="svg5615"
    version="1.1"
    inkscape:version="0.91 r13725"
-   inkscape:export-filename="/home/thomas/git/timetrackr/static/icons/launcher/apple_launcher_icon_512.png"
-   inkscape:export-xdpi="90"
-   inkscape:export-ydpi="90"
+   inkscape:export-filename="/home/thomas/git/timetrackr/static/icons/launcher/apple_launcher_icon_192.png"
+   inkscape:export-xdpi="33.75"
+   inkscape:export-ydpi="33.75"
    sodipodi:docname="apple_icon_timetrackr.svg">
   <defs
      id="defs5617">
@@ -49,21 +49,21 @@
       <stop
          id="stop7252"
          offset="0"
-         style="stop-color:#fd5720;stop-opacity:1" />
+         style="stop-color:#98462b;stop-opacity:1" />
       <stop
          id="stop7254"
          offset="1"
-         style="stop-color:#cc4f25;stop-opacity:1" />
+         style="stop-color:#c94e26;stop-opacity:1" />
     </linearGradient>
     <linearGradient
        inkscape:collect="always"
        id="linearGradient7205">
       <stop
-         style="stop-color:#ff5720;stop-opacity:1"
+         style="stop-color:#96462b;stop-opacity:1"
          offset="0"
          id="stop7207" />
       <stop
-         style="stop-color:#96462b;stop-opacity:1"
+         style="stop-color:#ff5720;stop-opacity:1"
          offset="1"
          id="stop7209" />
     </linearGradient>
@@ -241,8 +241,8 @@
        inkscape:collect="always"
        xlink:href="#linearGradient7250"
        id="linearGradient7242"
-       x1="111.84095"
-       y1="1093.4108"
+       x1="110.56624"
+       y1="1088.7859"
        x2="97.091927"
        y2="869.87671"
        gradientUnits="userSpaceOnUse"
@@ -264,18 +264,48 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="103.50289"
-     inkscape:cy="240.89378"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="9.225705"
+     inkscape:cy="178.907"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
-     showgrid="false"
+     showgrid="true"
      units="px"
      inkscape:window-width="1920"
      inkscape:window-height="1031"
      inkscape:window-x="1920"
      inkscape:window-y="25"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid7355" />
+    <sodipodi:guide
+       position="0,510.00001"
+       orientation="0,1"
+       id="guide7357" />
+    <sodipodi:guide
+       position="330.00001,330.00001"
+       orientation="-0.70710678,0.70710678"
+       id="guide7359" />
+    <sodipodi:guide
+       position="180,330.00001"
+       orientation="0.70710678,0.70710678"
+       id="guide7361" />
+    <sodipodi:guide
+       position="540.00001,0"
+       orientation="0,1"
+       id="guide7363" />
+    <sodipodi:guide
+       position="0,480.00001"
+       orientation="1,0"
+       id="guide7365" />
+    <sodipodi:guide
+       position="510.00001,400.00001"
+       orientation="1,0"
+       id="guide7367" />
+  </sodipodi:namedview>
   <metadata
      id="metadata5620">
     <rdf:RDF>
@@ -303,15 +333,15 @@
        rx="0"
        ry="0" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:26.05381775;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 186.38683,722.80638 76.38943,82.2098"
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:30;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 184.59457,724.54771 79.97395,78.72714"
        id="path4163"
        inkscape:connector-curvature="0" />
     <path
        inkscape:connector-curvature="0"
        id="rect4769"
-       d="m 248.42289,797.26456 99.59637,-91.58512 9.06425,9.85712 -99.59637,91.58512 z"
-       style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:4.0999999;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       d="m 249.9598,799.23169 96.16677,-95.17995 9.42003,9.51769 -96.16677,95.17995 z"
+       style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:15;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <path
        inkscape:connector-curvature="0"
        id="path4161"

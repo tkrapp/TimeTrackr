@@ -8,16 +8,8 @@
   "theme_color": "#444444",
   "background_color": "#ff0066",
   "icons": [{
-    "src": "static/icons/laucher/launcher_icon_48.png",
-    "sizes": "48x48",
-    "type": "image/png"
-  }, {
     "src": "static/icons/laucher/launcher_icon_72.png",
     "sizes": "72x72",
-    "type": "image/png"
-  }, {
-    "src": "static/icons/laucher/launcher_icon_96.png",
-    "sizes": "96x96",
     "type": "image/png"
   }, {
     "src": "static/icons/laucher/launcher_icon_144.png",
@@ -42,6 +34,10 @@
   }, {
     "src": "static/icons/laucher/launcher_icon_512.png",
     "sizes": "512x512",
+    "type": "image/png"
+  }, {
+    "src": "static/icons/laucher/launcher_icon_2048.png",
+    "sizes": "2048x2048",
     "type": "image/png"
   }],
 }
