@@ -177,7 +177,7 @@ var angular, console, moment, Promise;
             return inner;
         }
         
-        var storage = window.indexedDB === undefined ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
+        var storage = window.indexedDB !== undefined ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
         
         moment.locale($locale.id);
         
