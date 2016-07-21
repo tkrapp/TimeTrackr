@@ -66,6 +66,22 @@ var angular, console, moment, Promise;
                 });
             };
             
+            self.upsert = function (obj) {
+                return new Promise(function (resolve, reject) {
+                    var key = obj[self.keyPath];
+                    
+                    if (key !== undefined) {
+                        self.data[key] = obj;
+                        
+                        writeDataToStorage(self.data);
+                        
+                        resolve(true);
+                    } else {
+                        reject(new Error('Key attribute \'' + self.keyPath + '\' is undefined'));
+                    }
+                });
+            };
+            
             self.clear = function (obj) {
                 return new Promise(function (resolve, reject) {
                     self.data = {};
@@ -140,12 +156,140 @@ var angular, console, moment, Promise;
     }
     
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
-        var storage = window.indexedDB !== undefined ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
+        function SimpleConfigDialogFactory (init_value, title, ok, cancel, placeholder, callback, content) {
+            function inner () {
+                var promptDialog = $mdDialog.prompt();
+                
+                promptDialog
+                    .title(title)
+                    .placeholder(placeholder)
+                    .ariaLabel(title)
+                    .initialValue(init_value)
+                    .targetEvent(evt)
+                    .ok(ok)
+                    .cancel(cancel);
+                
+                $mdDialog
+                    .show(promptDialog)
+                    .then(callback);
+            }
+            
+            return inner;
+        }
+        
+        var storage = window.indexedDB === undefined ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
         
         moment.locale($locale.id);
         
         $scope.bookings = [];
-        $scope.databaseEngine = storage instanceof window.LocalStorage ? 'LocalStorage' : 'indexedDB';
+        $scope.databaseEngine = storage instanceof window.LocalStorage ? 'LocalStorage' : 'IndexedDB';
+        
+        $scope.config = {
+            dailyWorkingTime: 7.6,
+            maxDailyWorkingTime: 10,
+            dailyRestPeriod: 11
+        };
+        $scope.$watch('config', saveConfig, true);
+        $scope.setConfigDailyWorkingTime = function (evt) {
+            $translate(['DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL']).then(function (translations) {
+                var promptDialog = $mdDialog.prompt();
+                
+                promptDialog
+                    .title(translations.DAILY_WORKINGTIME)
+                    .placeholder(translations.DAILY_WORKINGTIME_PLACEHOLDER)
+                    .ariaLabel(translations.DAILY_WORKINGTIME)
+                    .initialValue($scope.config.dailyWorkingTime)
+                    .targetEvent(evt)
+                    .ok(translations.OK)
+                    .cancel(translations.CANCEL);
+                
+                $mdDialog
+                    .show(promptDialog)
+                    .then(function (result) {
+                        $scope.config.dailyWorkingTime = parseFloat(result);
+                    });
+            });
+        };
+        
+        $scope.setConfigMaxDailyWorkingTime = function (evt) {
+            $translate(['MAX_DAILY_WORKINGTIME', 'MAX_DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL']).then(function (translations) {
+                var promptDialog = $mdDialog.prompt();
+                
+                promptDialog
+                    .title(translations.MAX_DAILY_WORKINGTIME)
+                    .placeholder(translations.MAX_DAILY_WORKINGTIME_PLACEHOLDER)
+                    .ariaLabel(translations.MAX_DAILY_WORKINGTIME)
+                    .initialValue($scope.config.maxDailyWorkingTime)
+                    .targetEvent(evt)
+                    .ok(translations.OK)
+                    .cancel(translations.CANCEL);
+                
+                $mdDialog
+                    .show(promptDialog)
+                    .then(function (result) {
+                        $scope.config.maxDailyWorkingTime = parseFloat(result);
+                    });
+            });
+        };
+        
+        $scope.setConfigDailyRestPeriod = function (evt) {
+            $translate(['DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER', 'OK', 'CANCEL']).then(function (translations) {
+                var promptDialog = $mdDialog.prompt();
+                
+                promptDialog
+                    .title(translations.DAILY_RESTPERIOD)
+                    .placeholder(translations.DAILY_RESTPERIOD_PLACEHOLDER)
+                    .ariaLabel(translations.DAILY_RESTPERIOD)
+                    .initialValue($scope.config.dailyRestPeriod)
+                    .targetEvent(evt)
+                    .ok(translations.OK)
+                    .cancel(translations.CANCEL);
+                
+                $mdDialog
+                    .show(promptDialog)
+                    .then(function (result) {
+                        $scope.config.dailyRestPeriod = parseFloat(result);
+                    });
+            });
+        };
+        
+        function saveConfig() {
+            storage.openStore(CONFIG_STORE_NAME, function (store) {
+                var keys = Object.keys($scope.config),
+                    len_keys = keys.length,
+                    idx,
+                    key,
+                    val;
+                
+                for (idx = 0; idx < len_keys; idx += 1) {
+                    key = keys[idx];
+                    val = $scope.config[key];
+                    
+                    store.upsert({
+                        'setting': key,
+                        'value': val
+                    });
+                }
+            });
+        }
+        
+        function loadConfig() {
+            storage.openStore(CONFIG_STORE_NAME, function (store) {
+                store.getAll().then(function (result) {
+                    var len_result = result.length,
+                        idx,
+                        setting;
+                    
+                    for (idx = 0; idx < len_result; idx += 1) {
+                        setting = result[idx];
+                        
+                        if ($scope.config.hasOwnProperty(setting.setting)) {
+                            $scope.config[setting.setting] = setting.value;
+                        }
+                    }
+                });
+            });
+        }
         
         function updateBookings() {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
@@ -274,6 +418,7 @@ var angular, console, moment, Promise;
 
         (function () {
             updateBookings();
+            loadConfig();
         }());
     }
     
@@ -298,7 +443,21 @@ var angular, console, moment, Promise;
                     'DIALOG_CONTENT_DELETE_ALL': 'If you confirm this, really ALL bookings are beeing deleted!',
                     'DIALOG_CONFIRM_DELETE_ALL': 'Yes, I do!',
                     'DIALOG_CANCEL_DELETE_ALL': 'Maybe not',
-                    'DIALOG_TITLE_EDIT_BOOKING': 'Edit booking'
+                    'DIALOG_TITLE_EDIT_BOOKING': 'Edit booking',
+                    'DAILY_WORKINGTIME': 'Daily working time',
+                    'DAILY_WORKINGTIME_PLACEHOLDER': '8 h',
+                    'DAILY_RESTPERIOD': 'Daily rest period',
+                    'DAILY_RESTPERIOD_PLACEHOLDER': '11 h',
+                    'MAX_DAILY_WORKINGTIME': 'Maximum daily working time',
+                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': '10 h',
+                    'OK': 'Ok',
+                    'CANCEL': 'Cancel',
+                    'SUBHEADER_MISC_SETTINGS': 'Miscellaneous',
+                    'SUBHEADER_WORKINGTIME_SETTINGS': 'Working time settings',
+                    'SUBHEADER_ABOUT_SETTINGS': 'About TimeTrackr',
+                    'DATABASE_ENGINE': 'Database engine',
+                    'DATABASE_ENGINE_USED': 'Using',
+                    'DEVELOPED_BY': 'Developed by',
                 })
                 .translations('de_DE', {
                     'TOAST_DELETE_SINGLE': 'Buchung wurde gelöscht',
@@ -310,12 +469,27 @@ var angular, console, moment, Promise;
                     'NOT_AVAILABLE': 'Noch nicht verfügbar!',
                     'NO_BOOKINGS_BY_NOW': 'Momentan sind keine aufgezeichneten Buchungen vorhanden',
                     'LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Klicken Sie hier, um alle aufgezeichneten Buchungen zu löschen',
+                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Delete all tracked bookings',
                     'LABEL_DELETE_ALL_BOOKINGS': 'Alle Buchungen löschen',
                     'DIALOG_TITLE_DELETE_ALL': 'Möchten Sie wirklich alle Buchungen löschen?',
                     'DIALOG_CONTENT_DELETE_ALL': 'Wenn Sie dies bestätigen, werden wirklich ALLE Buchungen gelöscht!',
                     'DIALOG_CONFIRM_DELETE_ALL': 'Ja, ich will!',
                     'DIALOG_CANCEL_DELETE_ALL': 'Lieber nicht',
-                    'DIALOG_TITLE_EDIT_BOOKING': 'Buchung bearbeiten'
+                    'DIALOG_TITLE_EDIT_BOOKING': 'Buchung bearbeiten',
+                    'DAILY_WORKINGTIME': 'Tägliche Arbeitszeit',
+                    'DAILY_WORKINGTIME_PLACEHOLDER': '8 h',
+                    'DAILY_RESTPERIOD': 'Tägliche Ruhezeit',
+                    'DAILY_RESTPERIOD_PLACEHOLDER': '11 h',
+                    'MAX_DAILY_WORKINGTIME': 'Maximale tägliche Arbeitszeit',
+                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': '10 h',
+                    'OK': 'Ok',
+                    'CANCEL': 'Abbrechen',
+                    'SUBHEADER_MISC_SETTINGS': 'Sonstiges',
+                    'SUBHEADER_WORKINGTIME_SETTINGS': 'Arbeitszeiteinstellungen',
+                    'SUBHEADER_ABOUT_SETTINGS': 'Über TimeTrackr',
+                    'DATABASE_ENGINE': 'Datenbanktechnik',
+                    'DATABASE_ENGINE_USED': 'Nutze',
+                    'DEVELOPED_BY': 'Entwickelt von',
                 })
                 .preferredLanguage('de_DE')
                 .useSanitizeValueStrategy('sanitizeParameters');

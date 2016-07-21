@@ -81,14 +81,50 @@
                 </md-tab-label>
                 <md-tab-body>
                     <md-list>
+                        <md-subheader>
+                            {{ 'SUBHEADER_WORKINGTIME_SETTINGS' | translate }}
+                        </md-subheader>
+                        <md-list-item class="md-2-line" ng-click="setConfigDailyWorkingTime($event)">
+                            <div class="md-list-item-text">
+                                <h3 translate="DAILY_WORKINGTIME"></h3>
+                                <p>{{ config.dailyWorkingTime | number:2 }} h</p>
+                            </div>
+                        </md-list-item>
+                        <md-list-item class="md-2-line" ng-click="setConfigMaxDailyWorkingTime($event)">
+                            <div class="md-list-item-text">
+                                <h3 translate="MAX_DAILY_WORKINGTIME"></h3>
+                                <p>{{ config.maxDailyWorkingTime | number:2 }} h</p>
+                            </div>
+                        </md-list-item>
+                        <md-list-item class="md-2-line" ng-click="setConfigDailyRestPeriod($event)">
+                            <div class="md-list-item-text">
+                                <h3 translate="DAILY_RESTPERIOD"></h3>
+                                <p>{{ config.dailyRestPeriod | number:2 }} h</p>
+                            </div>
+                        </md-list-item>
+                        <md-subheader>
+                            {{ 'SUBHEADER_MISC_SETTINGS' | translate }}
+                        </md-subheader>
                         <md-list-item class="secondary-button-padding" ng-click="deleteAllBookings($event)">
                             <p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
-                            <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ LABEL_ARIA_DELETE_ALL_BOOKINGS | translate }}" ng-click="deleteAllBookings($event)">
+                            <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ 'LABEL_ARIA_DELETE_ALL_BOOKINGS' | translate }}" ng-click="deleteAllBookings($event)">
                                 <md-icon md-svg-icon="static/icons/delete_blk.svg" />
                             </md-button>
                         </md-list-item>
-                        <md-list-item>
-                            <p>Powered by {{ databaseEngine }}</p>
+                        <md-subheader>
+                            {{ 'SUBHEADER_ABOUT_SETTINGS' | translate }}
+                        </md-subheader>
+                        <md-list-item class="md-2-line">
+                            <div class="md-list-item-text">
+                                <h3 translate="DEVELOPED_BY"></h3>
+                                <p>Thomas Krapp</p>
+                            </div>
+                        </md-list-item>
+                        <md-list-item class="md-2-line">
+                            <div class="md-list-item-text">
+                                <h3 translate="DATABASE_ENGINE"></h3>
+                                <p><span translate="DATABASE_ENGINE_USED"></span> {{ databaseEngine }}</p>
+                            </div>
                         </md-list-item>
                     </md-list>
                 </md-tab-body>
