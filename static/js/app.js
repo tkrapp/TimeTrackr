@@ -36,6 +36,8 @@ var angular, console, moment;
         var storage = window.indexedDB !== undefined ? $indexedDB : LocalStorage();
         //var storage = new LocalStorage();
         
+        $scope.databaseEngine = storage instanceof LocalStorage ? 'LocalStorage' : 'indexedDB';
+        
         function updateTrackedBookings() {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 store.getAll().then(function (result) {
