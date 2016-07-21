@@ -1,5 +1,8 @@
 // "import" modules to satisfy jslint
-var angular, console, moment, Promise;
+/*jslint browser: true*/
+/*global
+    angular, console, moment, Promise
+*/
 
 (function (ns) {
     'use strict';
@@ -137,7 +140,14 @@ var angular, console, moment, Promise;
         OBJECT_STORE_NAME = 'bookings',
         TOAST_DELAY = 3000,
         LOCAL_STORAGE_VERSION_KEY = 'TimeTrackrDBVersion',
-        local_storage_version;
+        local_storage_version,
+        database_backend = (function () {
+            if (window.indexedDB !== undefined) {
+                return 'indexedDB';
+            } else {
+                return 'LocalStorage';
+            }
+        }());
     
     function EditBookingDialogController($scope, $mdDialog) {
         $scope.hide = function () {
@@ -156,28 +166,7 @@ var angular, console, moment, Promise;
     }
     
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
-        function SimpleConfigDialogFactory (init_value, title, ok, cancel, placeholder, callback, content) {
-            function inner () {
-                var promptDialog = $mdDialog.prompt();
-                
-                promptDialog
-                    .title(title)
-                    .placeholder(placeholder)
-                    .ariaLabel(title)
-                    .initialValue(init_value)
-                    .targetEvent(evt)
-                    .ok(ok)
-                    .cancel(cancel);
-                
-                $mdDialog
-                    .show(promptDialog)
-                    .then(callback);
-            }
-            
-            return inner;
-        }
-        
-        var storage = window.indexedDB !== undefined ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
+        var storage = database_backend === 'indexedDB' ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
         
         moment.locale($locale.id);
         
@@ -189,6 +178,44 @@ var angular, console, moment, Promise;
             maxDailyWorkingTime: 10,
             dailyRestPeriod: 11
         };
+        function saveConfig() {
+            storage.openStore(CONFIG_STORE_NAME, function (store) {
+                var keys = Object.keys($scope.config),
+                    len_keys = keys.length,
+                    idx,
+                    key,
+                    val;
+                
+                for (idx = 0; idx < len_keys; idx += 1) {
+                    key = keys[idx];
+                    val = $scope.config[key];
+                    
+                    store.upsert({
+                        'setting': key,
+                        'value': val
+                    });
+                }
+            });
+        }
+        
+        function loadConfig() {
+            storage.openStore(CONFIG_STORE_NAME, function (store) {
+                store.getAll().then(function (result) {
+                    var len_result = result.length,
+                        idx,
+                        setting;
+                    
+                    for (idx = 0; idx < len_result; idx += 1) {
+                        setting = result[idx];
+                        
+                        if ($scope.config.hasOwnProperty(setting.setting)) {
+                            $scope.config[setting.setting] = setting.value;
+                        }
+                    }
+                });
+            });
+        }
+        
         $scope.$watch('config', saveConfig, true);
         $scope.setConfigDailyWorkingTime = function (evt) {
             $translate(['DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL']).then(function (translations) {
@@ -252,44 +279,6 @@ var angular, console, moment, Promise;
                     });
             });
         };
-        
-        function saveConfig() {
-            storage.openStore(CONFIG_STORE_NAME, function (store) {
-                var keys = Object.keys($scope.config),
-                    len_keys = keys.length,
-                    idx,
-                    key,
-                    val;
-                
-                for (idx = 0; idx < len_keys; idx += 1) {
-                    key = keys[idx];
-                    val = $scope.config[key];
-                    
-                    store.upsert({
-                        'setting': key,
-                        'value': val
-                    });
-                }
-            });
-        }
-        
-        function loadConfig() {
-            storage.openStore(CONFIG_STORE_NAME, function (store) {
-                store.getAll().then(function (result) {
-                    var len_result = result.length,
-                        idx,
-                        setting;
-                    
-                    for (idx = 0; idx < len_result; idx += 1) {
-                        setting = result[idx];
-                        
-                        if ($scope.config.hasOwnProperty(setting.setting)) {
-                            $scope.config[setting.setting] = setting.value;
-                        }
-                    }
-                });
-            });
-        }
         
         function updateBookings() {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
@@ -457,7 +446,7 @@ var angular, console, moment, Promise;
                     'SUBHEADER_ABOUT_SETTINGS': 'About TimeTrackr',
                     'DATABASE_ENGINE': 'Database engine',
                     'DATABASE_ENGINE_USED': 'Using',
-                    'DEVELOPED_BY': 'Developed by',
+                    'DEVELOPED_BY': 'Developed by'
                 })
                 .translations('de_DE', {
                     'TOAST_DELETE_SINGLE': 'Buchung wurde gelöscht',
@@ -489,7 +478,7 @@ var angular, console, moment, Promise;
                     'SUBHEADER_ABOUT_SETTINGS': 'Über TimeTrackr',
                     'DATABASE_ENGINE': 'Datenbanktechnik',
                     'DATABASE_ENGINE_USED': 'Nutze',
-                    'DEVELOPED_BY': 'Entwickelt von',
+                    'DEVELOPED_BY': 'Entwickelt von'
                 })
                 .preferredLanguage('de_DE')
                 .useSanitizeValueStrategy('sanitizeParameters');
@@ -519,7 +508,7 @@ var angular, console, moment, Promise;
                 .accentPalette('white');
         });
 
-    if (window.indexedDB !== undefined) {
+    if (database_backend === 'indexedDB') {
         angular
             .module('TimeTrackr')
             .config(function ($indexedDBProvider) {
