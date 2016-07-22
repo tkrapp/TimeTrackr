@@ -31,7 +31,7 @@
     <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_512.png" sixes="512x512" />
 </head>
 
-<body ng-app="TimeTrackr">
+<body>
     <div id="app-container" layout="column" layout-fill ng-cloak ng-controller="TimeTrackrCtrl">
         <md-toolbar class="site-content-toolbar">
             <div class="md-toolbar-tools">
@@ -126,6 +126,27 @@
                                 <p><span translate="DATABASE_ENGINE_USED"></span> {{ databaseEngine }}</p>
                             </div>
                         </md-list-item>
+                        <md-subheader>
+                            Debug Information
+                        </md-subheader>
+                        <md-list-item class="md-2-line">
+                            <div class="md-list-item-text">
+                                <h3>appCodeName</h3>
+                                <p>{{ navigator.appCodeName }}</p>
+                            </div>
+                        </md-list-item>
+                        <md-list-item class="md-2-line">
+                            <div class="md-list-item-text">
+                                <h3>appName</h3>
+                                <p>{{ navigator.appName }}</p>
+                            </div>
+                        </md-list-item>
+                        <md-list-item class="md-2-line">
+                            <div class="md-list-item-text">
+                                <h3>userAgent</h3>
+                                <p>{{ navigator.userAgent }}</p>
+                            </div>
+                        </md-list-item>
                     </md-list>
                 </md-tab-body>
             </md-tab>
@@ -143,6 +164,9 @@
             </md-dialog>
         </div>
     </div>
+    
+    <!-- Thank you Apple!!! -->
+    <script type="text/javascript" src="static/js/lib/detect-idb.js"></script>
     
     <!-- App Dependencies -->
     <script type="text/javascript" src="static/js/lib/moment-with-locales.min.js"></script>

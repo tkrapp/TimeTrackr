@@ -1,7 +1,7 @@
 // "import" modules to satisfy jslint
 /*jslint browser: true*/
 /*global
-    angular, console, moment, Promise
+    angular, console, detectIDB, moment, Promise
 */
 
 (function (ns) {
@@ -128,9 +128,9 @@
     };
 }(window));
 
-(function (angular) {
+detectIDB(function (idb_capability) {
     'use strict';
-    
+
     var BOOKING_COMING = 'BOOKING_COMING',
         BOOKING_LEAVING = 'BOOKING_LEAVING',
         IDB_NAME = 'TimeTrackrDB',
@@ -140,15 +140,13 @@
         OBJECT_STORE_NAME = 'bookings',
         TOAST_DELAY = 3000,
         LOCAL_STORAGE_VERSION_KEY = 'TimeTrackrDBVersion',
+        DATABASE_IDB = 'IndexedDB',
+        DATABASE_LS = 'LocalStorage',
         local_storage_version,
         database_backend = (function () {
-            if (window.indexedDB !== undefined) {
-                return 'indexedDB';
-            } else {
-                return 'LocalStorage';
-            }
+            return idb_capability === detectIDB.COMPATIBLE ? DATABASE_IDB : DATABASE_LS;
         }());
-    
+
     function EditBookingDialogController($scope, $mdDialog) {
         $scope.hide = function () {
             $mdDialog.hide();
@@ -160,13 +158,13 @@
             $mdDialog.hide(answer);
         };
     }
-    
+
     function sort_by_timestamp_desc(a, b) {
         return b.timestamp - a.timestamp;
     }
-    
+
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
-        var storage = database_backend === 'indexedDB' ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
+        var storage = database_backend === DATABASE_IDB ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
         
         moment.locale($locale.id);
         
@@ -405,12 +403,14 @@
             });
         };
 
+        $scope.navigator = navigator;
+        
         (function () {
             updateBookings();
             loadConfig();
         }());
     }
-    
+
     angular
         .module('TimeTrackr', ['ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate'])
         .controller('TimeTrackrCtrl', TimeTrackrCtrl)
@@ -508,7 +508,7 @@
                 .accentPalette('white');
         });
 
-    if (database_backend === 'indexedDB') {
+    if (database_backend === DATABASE_IDB) {
         angular
             .module('TimeTrackr')
             .config(function ($indexedDBProvider) {
@@ -600,9 +600,50 @@
         
         localStorage[LOCAL_STORAGE_VERSION_KEY] = angular.toJson(local_storage_version);
     }
-}(angular));
+    
+    angular.bootstrap(document, ['TimeTrackr'])
+});
 
-
+// TimeSeries testing
+(function () {
+    'use strict';
+    
+    var TYPE_COMING = 0,
+        TYPE_LEAVING = 1,
+        timeserieses = [
+            [ // day with 30 min break
+                {'timestamp': moment("2016-07-22 06:30"), 'type': TYPE_COMING},
+                {'timestamp': moment("2016-07-22 12:00"), 'type': TYPE_LEAVING},
+                {'timestamp': moment("2016-07-22 12:30"), 'type': TYPE_COMING},
+                {'timestamp': moment("2016-07-22 14:00"), 'type': TYPE_LEAVING}
+            ],
+            [ // day without break
+                {'timestamp': moment("2016-07-22 06:30"), 'type': TYPE_COMING},
+                {'timestamp': moment("2016-07-22 14:00"), 'type': TYPE_LEAVING}
+            ]
+        ],
+        idx_ts,
+        idx_bk,
+        booking,
+        timeseries;
+    
+    function checkTimeSeriesValidity (timeseries) {
+        var idx_ts,
+            prev_bk_type = TYPE_LEAVING;
+        
+        for (idx_ts = 0; idx_bk < timeseries.length; idx_bk += 1) {
+            
+        }
+    }
+    
+    for (idx_ts = 0; idx_ts < timeserieses.length; idx_ts += 1) {
+        timeseries = timeserieses[idx_ts];
+        
+        for (idx_bk = 0; idx_bk < timeseries.length; idx_bk += 1) {
+            
+        }
+    }
+}());
 
 
 
