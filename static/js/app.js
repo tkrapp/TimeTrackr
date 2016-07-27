@@ -167,6 +167,7 @@ detectIDB(function (idb_capability) {
         var storage = database_backend === DATABASE_IDB ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
         
         moment.locale($locale.id);
+        window.scope = $scope;
         
         $scope.bookings = [];
         $scope.databaseEngine = storage instanceof window.LocalStorage ? 'LocalStorage' : 'IndexedDB';
@@ -296,7 +297,39 @@ detectIDB(function (idb_capability) {
                 });
             });
         }
-
+        
+        function alertInsertBookingFailed(err) {
+            $translate(['DIALOG_TITLE_INSERT_FAILED', 'DIALOG_CONTENT_INSERT_FAILED', 'OK']).then(function (translations) {
+                var alertDialog = $mdDialog.alert();
+                
+                alertDialog
+                    .title(translations.DIALOG_TITLE_INSERT_FAILED)
+                    .content(translations.DIALOG_CONTENT_INSERT_FAILED)
+                    .ok(translations.OK);
+                
+                $mdDialog
+                    .show(alertDialog);
+            });
+        }
+        
+        $scope.bookingSpeedDialOpen = false;
+        $scope.bookingSpeedDialClickCounter = 0;
+        $scope.incrementBookingSpeedDialClickCounter = function () {
+            $scope.bookingSpeedDialClickCounter += 1;
+        }
+        
+        $scope.$watch('bookingSpeedDialClickCounter', function (newValue) {
+            if (newValue > 0 && newValue % 2 === 0) {
+                $scope.trackBooking();
+            }
+        });
+        $scope.$watch('bookingSpeedDialOpen', function (newValue) {
+            console.log(arguments);
+            if (newValue === false) {
+                $scope.bookingSpeedDialClickCounter = 0;
+            }
+        });
+        
         $scope.trackBooking = function () {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 var type =  null,
@@ -313,7 +346,7 @@ detectIDB(function (idb_capability) {
                         'type': type,
                         'timestamp': timestamp.unix()
                     })
-                    .then(updateBookings);
+                    .then(updateBookings, alertInsertBookingFailed);
             });
         };
         
@@ -433,6 +466,8 @@ detectIDB(function (idb_capability) {
                     'DIALOG_CONFIRM_DELETE_ALL': 'Yes, I do!',
                     'DIALOG_CANCEL_DELETE_ALL': 'Maybe not',
                     'DIALOG_TITLE_EDIT_BOOKING': 'Edit booking',
+                    'DIALOG_TITLE_INSERT_FAILED': 'Failed to track booking',
+                    'DIALOG_CONTENT_INSERT_FAILED': 'We could not add your booking. Note that a booking can only be tracked once per minute.',
                     'DAILY_WORKINGTIME': 'Daily working time',
                     'DAILY_WORKINGTIME_PLACEHOLDER': '8 h',
                     'DAILY_RESTPERIOD': 'Daily rest period',
@@ -465,6 +500,8 @@ detectIDB(function (idb_capability) {
                     'DIALOG_CONFIRM_DELETE_ALL': 'Ja, ich will!',
                     'DIALOG_CANCEL_DELETE_ALL': 'Lieber nicht',
                     'DIALOG_TITLE_EDIT_BOOKING': 'Buchung bearbeiten',
+                    'DIALOG_TITLE_INSERT_FAILED': 'Die Buchung konnte nicht angelegt werden',
+                    'DIALOG_CONTENT_INSERT_FAILED': 'Wir konnten Ihre Buchung nicht anlegen. Bitte beachten Sie, dass eine Buchung nur einmal pro Minute getätigt werden kann.',
                     'DAILY_WORKINGTIME': 'Tägliche Arbeitszeit',
                     'DAILY_WORKINGTIME_PLACEHOLDER': '8 h',
                     'DAILY_RESTPERIOD': 'Tägliche Ruhezeit',

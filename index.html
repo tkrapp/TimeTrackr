@@ -38,9 +38,20 @@
                 <span>TimeTrackr</span>
             </div>
         </md-toolbar>
-        <md-button class="add-booking md-fab md-fab-bottom-right md-primary" aria-label="Track Booking" ng-click="trackBooking()" ng-class="{ visible: selectedTab==0 }">
-            <md-icon md-svg-icon="static/icons/add.svg"></md-icon>
-        </md-button>
+        <div class="speed-dial"  ng-class="{ visible: selectedTab==0 }">
+            <md-fab-speed-dial md-open="bookingSpeedDialOpen" class="md-fab-bottom-right md-scale" md-direction="up">
+                <md-fab-trigger>
+                    <md-button class="add-booking md-fab md-primary" aria-label="Track Booking" ng-click="incrementBookingSpeedDialClickCounter()">
+                        <md-icon md-svg-icon="static/icons/add.svg"></md-icon>
+                    </md-button>
+                </md-fab-trigger>
+                <md-fab-actions>
+                    <md-button aria-label="{{ 'BOOK_MANUAL' | translate }}" class="md-fab md-fab-raised md-mini">
+                        <md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
+                    </md-button>
+                </md-fab-actions>
+            </md-fab-speed-dial>
+        </div>
         <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="true">
             <md-tab layout="column" id="tab-tracking" class="md-primary">
                 <md-tab-label>

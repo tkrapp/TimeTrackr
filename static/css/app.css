@@ -1,10 +1,10 @@
-.add-booking.md-fab {
+.speed-dial {
   transition: opacity 0.1s linear, visibility 0s 0.1s;
   opacity: 0;
   visibility: hidden;
 }
 
-.add-booking.md-fab.visible {
+.speed-dial.visible {
   opacity: 1;
   visibility: visible;
   transition: opacity 0.1s linear, visibility 0s;
