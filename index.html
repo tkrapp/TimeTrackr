@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic" />
-    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css" />
+    <link rel="stylesheet" href="static/css/angular-material.min.css" />
     <link rel="stylesheet" href="static/css/app.css" />
     
     <!-- Standard Webapp Tags -->
@@ -20,7 +20,7 @@
     <link rel="icon" href="static/icons/launcher/launcher_icon_256.png" sizes="256x256"/>
     <link rel="icon" href="static/icons/launcher/launcher_icon_384.png" sizes="384x384"/>
     <link rel="icon" href="static/icons/launcher/launcher_icon_512.png" sizes="512x512"/>
-    <link rel="icon" href="static/icons/launcher/launcher_icon_512.png" sizes="2048x2048"/>
+    <link rel="icon" href="static/icons/launcher/launcher_icon_2048.png" sizes="2048x2048"/>
     
     <!-- Apple Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -32,137 +32,175 @@
 </head>
 
 <body>
-    <div id="app-container" layout="column" layout-fill ng-cloak ng-controller="TimeTrackrCtrl">
-        <md-toolbar class="site-content-toolbar">
-            <div class="md-toolbar-tools">
-                <span>TimeTrackr</span>
-            </div>
-        </md-toolbar>
-        <md-button class="add-booking md-fab md-fab-bottom-right md-primary" aria-label="Track Booking" ng-click="trackBooking()" ng-class="{ visible: selectedTab==0 }">
-            <md-icon md-svg-icon="static/icons/add.svg"></md-icon>
-        </md-button>
-        <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="true">
-            <md-tab layout="column" id="tab-tracking" class="md-primary">
-                <md-tab-label>
-                    <md-icon md-svg-icon="static/icons/timer.svg"></md-icon>
-                </md-tab-label>
-                <md-tab-body>
-                    <md-list class="list-tracking">
-                        <!-- <md-subheader>Tracked Bookings</md-subheader> -->
-                        <md-list-item class="md-2-line secondary-button-padding" ng-repeat="booking in bookings">
-                            <div class="md-list-item-text">
-                                <h3>{{ booking.timestamp.format('dd Do MMM YYYY, HH:mm') }} <span translate="OCLOCK" /></h3>
-                                <p translate="{{ booking.type }}"></p>
-                            </div>
-                            <md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showEditBookingDialog($event, booking)" ng-disabled="true">
-                                <md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
-                            </md-button>
-                            <md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteBooking(booking)">
-                                <md-icon md-svg-icon="static/icons/delete_blk.svg"></md-icon>
-                            </md-button>
-                        </md-list-item>
-                        <md-list-item ng-if="bookings.length === 0">
-                            <p translate="NO_BOOKINGS_BY_NOW"></p>
-                        </md-list-item>
-                    </md-list>
-                </md-tab-body>
-            </md-tab>
-            <md-tab id="tab-timetable">
-                <md-tab-label class="md-primary" aria-label="Timetable">
-                    <md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
-                </md-tab-label>
-                <md-tab-body>
-                    <md-content class="md-padding" translate="NOT_AVAILABLE"></md-content>
-                </md-tab-body>
-            </md-tab>
-            <md-tab id="tab-settings">
-                <md-tab-label>
-                    <md-icon md-svg-icon="static/icons/settings.svg"></md-icon>
-                </md-tab-label>
-                <md-tab-body>
-                    <md-list>
-                        <md-subheader>
-                            {{ 'SUBHEADER_WORKINGTIME_SETTINGS' | translate }}
-                        </md-subheader>
-                        <md-list-item class="md-2-line" ng-click="setConfigDailyWorkingTime($event)">
-                            <div class="md-list-item-text">
-                                <h3 translate="DAILY_WORKINGTIME"></h3>
-                                <p>{{ config.dailyWorkingTime | number:2 }} h</p>
-                            </div>
-                        </md-list-item>
-                        <md-list-item class="md-2-line" ng-click="setConfigMaxDailyWorkingTime($event)">
-                            <div class="md-list-item-text">
-                                <h3 translate="MAX_DAILY_WORKINGTIME"></h3>
-                                <p>{{ config.maxDailyWorkingTime | number:2 }} h</p>
-                            </div>
-                        </md-list-item>
-                        <md-list-item class="md-2-line" ng-click="setConfigDailyRestPeriod($event)">
-                            <div class="md-list-item-text">
-                                <h3 translate="DAILY_RESTPERIOD"></h3>
-                                <p>{{ config.dailyRestPeriod | number:2 }} h</p>
-                            </div>
-                        </md-list-item>
-                        <md-subheader>
-                            {{ 'SUBHEADER_MISC_SETTINGS' | translate }}
-                        </md-subheader>
-                        <md-list-item class="secondary-button-padding" ng-click="deleteAllBookings($event)">
-                            <p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
-                            <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ 'LABEL_ARIA_DELETE_ALL_BOOKINGS' | translate }}" ng-click="deleteAllBookings($event)">
-                                <md-icon md-svg-icon="static/icons/delete_blk.svg" />
-                            </md-button>
-                        </md-list-item>
-                        <md-subheader>
-                            {{ 'SUBHEADER_ABOUT_SETTINGS' | translate }}
-                        </md-subheader>
-                        <md-list-item class="md-2-line">
-                            <div class="md-list-item-text">
-                                <h3 translate="DEVELOPED_BY"></h3>
-                                <p>Thomas Krapp</p>
-                            </div>
-                        </md-list-item>
-                        <md-list-item class="md-2-line">
-                            <div class="md-list-item-text">
-                                <h3 translate="DATABASE_ENGINE"></h3>
-                                <p><span translate="DATABASE_ENGINE_USED"></span> {{ databaseEngine }}</p>
-                            </div>
-                        </md-list-item>
-                        <md-subheader>
-                            Debug Information
-                        </md-subheader>
-                        <md-list-item class="md-2-line">
-                            <div class="md-list-item-text">
-                                <h3>appCodeName</h3>
-                                <p>{{ navigator.appCodeName }}</p>
-                            </div>
-                        </md-list-item>
-                        <md-list-item class="md-2-line">
-                            <div class="md-list-item-text">
-                                <h3>appName</h3>
-                                <p>{{ navigator.appName }}</p>
-                            </div>
-                        </md-list-item>
-                        <md-list-item class="md-2-line">
-                            <div class="md-list-item-text">
-                                <h3>userAgent</h3>
-                                <p>{{ navigator.userAgent }}</p>
-                            </div>
-                        </md-list-item>
-                    </md-list>
-                </md-tab-body>
-            </md-tab>
-        </md-tabs>
-    </div>
-    
-    <!-- Templates -->
-    <div style="visibility: hidden">
-        <div class="md-dialog-container" id="dialogEditBooking">
-            <md-dialog layout-padding>
-                <h2 translate="DIALOG_TITLE_EDIT_BOOKING"></h2>
-                <form>
-                    
-                </form>
-            </md-dialog>
+    <div id="app-container" layout-fill ng-controller="TimeTrackrCtrl">
+        <div id="main-view" layout="column" layout-fill ng-cloak ng-show="views.main.visible">
+            <md-toolbar class="site-content-toolbar">
+                <div class="md-toolbar-tools">
+                    <span>TimeTrackr</span>
+                </div>
+            </md-toolbar>
+            <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="true">
+                <md-tab layout="column" id="tab-tracking" class="md-primary">
+                    <md-tab-label>
+                        <md-icon md-svg-icon="static/icons/timer.svg"></md-icon>
+                    </md-tab-label>
+                    <md-tab-body>
+                        <md-list class="list-tracking">
+                            <!-- <md-subheader>Tracked Bookings</md-subheader> -->
+                            <md-list-item class="md-2-line secondary-button-padding" ng-repeat="booking in bookings">
+                                <div class="md-list-item-text">
+                                    <h3>{{ booking.timestamp.format('dd Do MMM YYYY, HH:mm') }} <span translate="OCLOCK" /></h3>
+                                    <p translate="{{ booking.type }}"></p>
+                                </div>
+                                <md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showManualBookingView($event, booking)">
+                                    <md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
+                                </md-button>
+                                <md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteBooking(booking)">
+                                    <md-icon md-svg-icon="static/icons/delete_blk.svg"></md-icon>
+                                </md-button>
+                            </md-list-item>
+                            <md-list-item ng-if="bookings.length === 0">
+                                <p translate="NO_BOOKINGS_BY_NOW"></p>
+                            </md-list-item>
+                        </md-list>
+                    </md-tab-body>
+                </md-tab>
+                <md-tab id="tab-timetable">
+                    <md-tab-label class="md-primary" aria-label="Timetable">
+                        <md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
+                    </md-tab-label>
+                    <md-tab-body>
+                        <md-content class="md-padding" translate="NOT_AVAILABLE"></md-content>
+                    </md-tab-body>
+                </md-tab>
+                <md-tab id="tab-settings">
+                    <md-tab-label>
+                        <md-icon md-svg-icon="static/icons/settings.svg"></md-icon>
+                    </md-tab-label>
+                    <md-tab-body>
+                        <md-list>
+                            <md-subheader>
+                                {{ 'SUBHEADER_WORKINGTIME_SETTINGS' | translate }}
+                            </md-subheader>
+                            <md-list-item class="md-2-line" ng-click="setConfigDailyWorkingTime($event)">
+                                <div class="md-list-item-text">
+                                    <h3 translate="DAILY_WORKINGTIME"></h3>
+                                    <p>{{ config.dailyWorkingTime | number:2 }} h</p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line" ng-click="setConfigMaxDailyWorkingTime($event)">
+                                <div class="md-list-item-text">
+                                    <h3 translate="MAX_DAILY_WORKINGTIME"></h3>
+                                    <p>{{ config.maxDailyWorkingTime | number:2 }} h</p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line" ng-click="setConfigDailyRestPeriod($event)">
+                                <div class="md-list-item-text">
+                                    <h3 translate="DAILY_RESTPERIOD"></h3>
+                                    <p>{{ config.dailyRestPeriod | number:2 }} h</p>
+                                </div>
+                            </md-list-item>
+                            <md-subheader>
+                                {{ 'SUBHEADER_MISC_SETTINGS' | translate }}
+                            </md-subheader>
+                            <md-list-item class="secondary-button-padding" ng-click="deleteAllBookings($event)">
+                                <p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
+                                <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ 'LABEL_ARIA_DELETE_ALL_BOOKINGS' | translate }}" ng-click="deleteAllBookings($event)">
+                                    <md-icon md-svg-icon="static/icons/delete_blk.svg" />
+                                </md-button>
+                            </md-list-item>
+                            <md-subheader>
+                                {{ 'SUBHEADER_ABOUT_SETTINGS' | translate }}
+                            </md-subheader>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3 translate="DEVELOPED_BY"></h3>
+                                    <p>Thomas Krapp</p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3 translate="DATABASE_ENGINE"></h3>
+                                    <p><span translate="DATABASE_ENGINE_USED"></span> {{ databaseEngine }}</p>
+                                </div>
+                            </md-list-item>
+                            <md-subheader>
+                                Debug Information
+                            </md-subheader>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3>appCodeName</h3>
+                                    <p>{{ navigator.appCodeName }}</p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3>appName</h3>
+                                    <p>{{ navigator.appName }}</p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3>userAgent</h3>
+                                    <p>{{ navigator.userAgent }}</p>
+                                </div>
+                            </md-list-item>
+                        </md-list>
+                    </md-tab-body>
+                </md-tab>
+            </md-tabs>
         </div>
+        <md-fab-speed-dial class="new-booking-speeddial md-fling" md-open="newBookingSpeedDial.isOpen" ng-class="{ visible: selectedTab == 0 && views.main.visible }" md-direction="up">
+            <md-fab-trigger>
+                <md-button class="md-fab md-primary" aria-label="Track Booking" bla-ng-click="trackBooking()" ng-click="newBookingSpeedDial.trigger($event)">
+                    <md-icon md-svg-icon="static/icons/add.svg"></md-icon>
+                </md-button>
+            </md-fab-trigger>
+            <md-fab-actions>
+                <md-button class="md-fab md-warn md-raised md-mini" aria-label="Track Booking" ng-click="showManualBookingView($event)">
+                    <md-icon md-svg-icon="static/icons/close.svg"></md-icon>
+                </md-button>
+            </md-fab-actions>
+        </md-fab-speed-dial>
+        <form name="manualBookingForm" id="manual-booking-view" ng-submit="saveManualBooking($event)" layout="column" layout-fill ng-cloak ng-show="views.manualBooking.visible">
+            <md-toolbar class="site-content-toolbar md-accent">
+                <div class="md-toolbar-tools">
+                    <md-button class="md-icon-button" ng-click="hideManualBookingView($event)" ng-attr-aria-label="{{ 'CLOSE' | translate }}">
+                        <md-icon md-svg-icon="static/icons/close_blk.svg"></md-icon>
+                    </md-button>
+                    <span flex></span>
+                    <md-button type="submit" class="md-button">
+                        {{ 'SAVE' | translate }}
+                    </md-button>
+                </div>
+            </md-toolbar>
+            <md-input-container>
+                <label>{{ 'LABEL_BOOKING_DATE' | translate }}</label>
+                <md-datepicker name="dateField" ng-model="manualBooking.date" ng-required="true" md-current-view="month"></md-datepicker>
+                <div ng-messages="manualBookingForm.dateField.$error">
+                    <div ng-message="valid">{{ 'INVALID_DATE' | translate }}</div>
+                    <div ng-message="required">{{ 'REQUIRED_DATE' | translate }}</div>
+                </div>
+            </md-input-container>
+            <md-input-container>
+                <label>{{ 'LABEL_BOOKING_TIME' | translate }} ({{ 'FORMAT_TIME' | translate}})</label>
+                <input name="timeField" ng-model="manualBooking.time" type="time" required timevalid />
+                <div ng-messages="manualBookingForm.timeField.$error">
+                    <div ng-message="valid">{{ 'INVALID_TIME' | translate }}</div>
+                    <div ng-message="required">{{ 'REQUIRED_TIME' | translate }}</div>
+                </div>
+            </md-input-container>
+            <md-input-container>
+                <label>{{ 'LABEL_BOOKING_TYPE' | translate }}</label>
+                <md-select name="typeField" ng-model="manualBooking.type" required>
+                    <md-option ng-repeat="type in manualBooking.availableTypes" ng-value="type.value">{{ type.html }}</md-option>
+                </md-select>
+                <div ng-messages="manualBookingForm.typeField.$error">
+                    <div ng-message="valid">{{ 'INVALID_TYPE' | translate }}</div>
+                    <div ng-message="required">{{ 'REQUIRED_TYPE' | translate }}</div>
+                </div>
+            </md-input-container>
+        </form>
     </div>
     
     <!-- Thank you Apple!!! -->
@@ -182,6 +220,7 @@
     <!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-i18n/1.5.7/angular-locale_en-us.js"></script> -->
     
     <!-- Angular.js Addons -->
+    <script type="text/javascript" src="static/js/lib/indexeddbshim.min.js"></script>
     <script type="text/javascript" src="static/js/lib/indexeddb.js"></script>
     <script type="text/javascript" src="static/js/lib/angular-translate.min.js"></script>
     
