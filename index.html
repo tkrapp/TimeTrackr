@@ -32,8 +32,8 @@
 </head>
 
 <body>
-    <div id="app-container" layout-fill ng-controller="TimeTrackrCtrl">
-        <div id="main-view" layout="column" layout-fill ng-cloak ng-show="views.main.visible">
+    <div id="app-container" layout-fill ng-controller="TimeTrackrCtrl" ng-cloak>
+        <div id="main-view" layout="column" layout-fill ng-show="views.main.visible">
             <md-toolbar class="site-content-toolbar">
                 <div class="md-toolbar-tools">
                     <span>TimeTrackr</span>
@@ -157,13 +157,13 @@
                 </md-button>
             </md-fab-trigger>
             <md-fab-actions>
-                <md-button class="md-fab md-warn md-raised md-mini" aria-label="Track Booking" ng-click="showManualBookingView($event)">
-                    <md-icon md-svg-icon="static/icons/close.svg"></md-icon>
+                <md-button class="md-fab md-raised md-mini" aria-label="Track Booking" ng-click="showManualBookingView($event)">
+                    <md-icon md-svg-icon="static/icons/add_details_blk.svg"></md-icon>
                 </md-button>
             </md-fab-actions>
         </md-fab-speed-dial>
         <form name="manualBookingForm" id="manual-booking-view" ng-submit="saveManualBooking($event)" layout="column" layout-fill ng-cloak ng-show="views.manualBooking.visible">
-            <md-toolbar class="site-content-toolbar md-accent">
+            <md-toolbar class="manual-booking-toolbar md-accent">
                 <div class="md-toolbar-tools">
                     <md-button class="md-icon-button" ng-click="hideManualBookingView($event)" ng-attr-aria-label="{{ 'CLOSE' | translate }}">
                         <md-icon md-svg-icon="static/icons/close_blk.svg"></md-icon>
@@ -174,32 +174,38 @@
                     </md-button>
                 </div>
             </md-toolbar>
-            <md-input-container>
-                <label>{{ 'LABEL_BOOKING_DATE' | translate }}</label>
-                <md-datepicker name="dateField" ng-model="manualBooking.date" ng-required="true" md-current-view="month"></md-datepicker>
-                <div ng-messages="manualBookingForm.dateField.$error">
-                    <div ng-message="valid">{{ 'INVALID_DATE' | translate }}</div>
-                    <div ng-message="required">{{ 'REQUIRED_DATE' | translate }}</div>
-                </div>
-            </md-input-container>
-            <md-input-container>
-                <label>{{ 'LABEL_BOOKING_TIME' | translate }} ({{ 'FORMAT_TIME' | translate}})</label>
-                <input name="timeField" ng-model="manualBooking.time" type="time" required timevalid />
-                <div ng-messages="manualBookingForm.timeField.$error">
-                    <div ng-message="valid">{{ 'INVALID_TIME' | translate }}</div>
-                    <div ng-message="required">{{ 'REQUIRED_TIME' | translate }}</div>
-                </div>
-            </md-input-container>
-            <md-input-container>
-                <label>{{ 'LABEL_BOOKING_TYPE' | translate }}</label>
-                <md-select name="typeField" ng-model="manualBooking.type" required>
-                    <md-option ng-repeat="type in manualBooking.availableTypes" ng-value="type.value">{{ type.html }}</md-option>
-                </md-select>
-                <div ng-messages="manualBookingForm.typeField.$error">
-                    <div ng-message="valid">{{ 'INVALID_TYPE' | translate }}</div>
-                    <div ng-message="required">{{ 'REQUIRED_TYPE' | translate }}</div>
-                </div>
-            </md-input-container>
+            <md-content>
+                <md-input-container>
+                    <label>{{ 'LABEL_BOOKING_DATE' | translate }}</label>
+                    <md-datepicker name="dateField" ng-model="manualBooking.date" ng-required="true" md-current-view="month"></md-datepicker>
+                    <div ng-messages="manualBookingForm.dateField.$error">
+                        <div ng-message="valid">{{ 'INVALID_DATE' | translate }}</div>
+                        <div ng-message="required">{{ 'REQUIRED_DATE' | translate }}</div>
+                    </div>
+                </md-input-container>
+                <md-divider></md-divider>
+                <md-icon md-svg-icon="static/icons/schedule_blk.svg" class="s48"></md-icon>
+                <md-input-container>
+                    <label>{{ 'LABEL_BOOKING_TIME' | translate }} ({{ 'FORMAT_TIME' | translate}})</label>
+                    <input name="timeField" ng-model="manualBooking.time" type="time" required timevalid />
+                    <div ng-messages="manualBookingForm.timeField.$error">
+                        <div ng-message="valid">{{ 'INVALID_TIME' | translate }}</div>
+                        <div ng-message="required">{{ 'REQUIRED_TIME' | translate }}</div>
+                    </div>
+                </md-input-container>
+                <md-divider></md-divider>
+                <md-icon md-svg-icon="static/icons/nature_blk.svg" class="s48"></md-icon>
+                <md-input-container>
+                    <label>{{ 'LABEL_BOOKING_TYPE' | translate }}</label>
+                    <md-select name="typeField" ng-model="manualBooking.type" required>
+                        <md-option ng-repeat="type in manualBooking.availableTypes" ng-value="type.value">{{ type.html }}</md-option>
+                    </md-select>
+                    <div ng-messages="manualBookingForm.typeField.$error">
+                        <div ng-message="valid">{{ 'INVALID_TYPE' | translate }}</div>
+                        <div ng-message="required">{{ 'REQUIRED_TYPE' | translate }}</div>
+                    </div>
+                </md-input-container>
+            </md-content>
         </form>
     </div>
     

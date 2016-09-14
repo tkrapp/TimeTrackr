@@ -532,16 +532,13 @@ detectIDB(function (idb_capability) {
                                             'type': type,
                                             'timestamp': timestamp.unix()
                                         })
-                                        .then(function () {
-                                            $scope.hideManualBookingView();
-                                        });
+                                        .then(updateBookings);
                                 });
                             } else {
                                 manualBooking.oldBooking.timestamp = old_timestamp;
                                 manualBooking.oldBooking.type = old_type;
                             }
-                        })
-                        .then(updateBookings);
+                        });
                 } else {
                     storage.openStore(OBJECT_STORE_NAME, function (store) {
                         store
