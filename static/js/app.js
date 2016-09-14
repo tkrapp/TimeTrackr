@@ -64,7 +64,11 @@
                             reject(new Error('Key ' + key + ' already exists'));
                         }
                     } else {
-                        reject(new Error('Key attribute \'' + self.keyPath + '\' is undefined'));
+                        reject(
+                            new Error(
+                                'Key attribute \'' + self.keyPath + '\' is undefined'
+                            )
+                        );
                     }
                 });
             };
@@ -80,7 +84,11 @@
                         
                         resolve(true);
                     } else {
-                        reject(new Error('Key attribute \'' + self.keyPath + '\' is undefined'));
+                        reject(
+                            new Error(
+                                'Key attribute \'' + self.keyPath + '\' is undefined'
+                            )
+                        );
                     }
                 });
             };
@@ -131,7 +139,8 @@
 detectIDB(function (idb_capability) {
     'use strict';
 
-    var BOOKING_COMING = 'BOOKING_COMING',
+    var MODULE_NAME = 'TimeTrackr',
+        BOOKING_COMING = 'BOOKING_COMING',
         BOOKING_LEAVING = 'BOOKING_LEAVING',
         IDB_NAME = 'TimeTrackrDB',
         IDX_BOOKING_TYPE = 'type_idx',
@@ -144,39 +153,80 @@ detectIDB(function (idb_capability) {
         DATABASE_LS = 'LocalStorage',
         local_storage_version,
         database_backend = (function () {
-            return idb_capability === detectIDB.COMPATIBLE ? DATABASE_IDB : DATABASE_LS;
+            if (idb_capability === detectIDB.COMPATIBLE) {
+                return DATABASE_IDB;
+            } else {
+                return DATABASE_LS;
+            }
         }());
-
-    function EditBookingDialogController($scope, $mdDialog) {
-        $scope.hide = function () {
-            $mdDialog.hide();
-        };
-        $scope.cancel = function () {
-            $mdDialog.cancel();
-        };
-        $scope.answer = function (answer) {
-            $mdDialog.hide(answer);
-        };
-    }
 
     function sort_by_timestamp_desc(a, b) {
         return b.timestamp - a.timestamp;
     }
 
     function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
-        var storage = database_backend === DATABASE_IDB ? $indexedDB : window.LocalStorageFactory({'config': 'setting', 'bookings': 'timestamp'});
+        var storage;
         
-        moment.locale($locale.id);
         window.scope = $scope;
         
+        if (database_backend === DATABASE_IDB) {
+            storage = $indexedDB;
+        } else {
+            storage = window.LocalStorageFactory(
+                {'config': 'setting', 'bookings': 'timestamp'}
+            );
+        }
+        
+        moment.locale($locale.id);
+        
+        $scope.newBookingSpeedDial = {
+            trigger: function (evt) {
+                if ($scope.newBookingSpeedDial.isOpen) {
+                    // speed dial was open and is closed using the trigger
+                    
+                    $scope.trackBooking();
+                }
+            },
+            isOpen: false
+        };
+        $scope.views = {
+            main: {
+                visible: true
+            },
+            manualBooking: {
+                visible: false
+            }
+        }
+        
+        $scope.showView = function (view_name) {
+            var view_names = Object.keys($scope.views),
+                valid = view_names.indexOf(view_name) > -1,
+                current_view_name,
+                idx;
+            
+            if (!valid) {
+                throw new Error('Invalid view name: ' + view_name);
+            }
+            
+            for (idx = 0; idx < view_names.length; idx += 1) {
+                current_view_name = view_names[idx];
+                
+                $scope.views[current_view_name].visible = current_view_name === view_name;
+            }
+        };
+        
         $scope.bookings = [];
-        $scope.databaseEngine = storage instanceof window.LocalStorage ? 'LocalStorage' : 'IndexedDB';
+        $scope.databaseEngine = 'IndexedDB';
+        if (storage instanceof window.LocalStorage) {
+            $scope.databaseEngine = 'LocalStorage';
+        }
         
         $scope.config = {
             dailyWorkingTime: 7.6,
             maxDailyWorkingTime: 10,
             dailyRestPeriod: 11
         };
+        
         function saveConfig() {
             storage.openStore(CONFIG_STORE_NAME, function (store) {
                 var keys = Object.keys($scope.config),
@@ -217,7 +267,9 @@ detectIDB(function (idb_capability) {
         
         $scope.$watch('config', saveConfig, true);
         $scope.setConfigDailyWorkingTime = function (evt) {
-            $translate(['DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL']).then(function (translations) {
+            $translate([
+                'DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL'
+            ]).then(function (translations) {
                 var promptDialog = $mdDialog.prompt();
                 
                 promptDialog
@@ -238,7 +290,10 @@ detectIDB(function (idb_capability) {
         };
         
         $scope.setConfigMaxDailyWorkingTime = function (evt) {
-            $translate(['MAX_DAILY_WORKINGTIME', 'MAX_DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL']).then(function (translations) {
+            $translate([
+                'MAX_DAILY_WORKINGTIME', 'MAX_DAILY_WORKINGTIME_PLACEHOLDER', 'OK',
+                'CANCEL'
+            ]).then(function (translations) {
                 var promptDialog = $mdDialog.prompt();
                 
                 promptDialog
@@ -259,7 +314,9 @@ detectIDB(function (idb_capability) {
         };
         
         $scope.setConfigDailyRestPeriod = function (evt) {
-            $translate(['DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER', 'OK', 'CANCEL']).then(function (translations) {
+            $translate([
+                'DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER', 'OK', 'CANCEL'
+            ]).then(function (translations) {
                 var promptDialog = $mdDialog.prompt();
                 
                 promptDialog
@@ -297,45 +354,15 @@ detectIDB(function (idb_capability) {
                 });
             });
         }
-        
-        function alertInsertBookingFailed(err) {
-            $translate(['DIALOG_TITLE_INSERT_FAILED', 'DIALOG_CONTENT_INSERT_FAILED', 'OK']).then(function (translations) {
-                var alertDialog = $mdDialog.alert();
-                
-                alertDialog
-                    .title(translations.DIALOG_TITLE_INSERT_FAILED)
-                    .content(translations.DIALOG_CONTENT_INSERT_FAILED)
-                    .ok(translations.OK);
-                
-                $mdDialog
-                    .show(alertDialog);
-            });
-        }
-        
-        $scope.bookingSpeedDialOpen = false;
-        $scope.bookingSpeedDialClickCounter = 0;
-        $scope.incrementBookingSpeedDialClickCounter = function () {
-            $scope.bookingSpeedDialClickCounter += 1;
-        }
-        
-        $scope.$watch('bookingSpeedDialClickCounter', function (newValue) {
-            if (newValue > 0 && newValue % 2 === 0) {
-                $scope.trackBooking();
-            }
-        });
-        $scope.$watch('bookingSpeedDialOpen', function (newValue) {
-            console.log(arguments);
-            if (newValue === false) {
-                $scope.bookingSpeedDialClickCounter = 0;
-            }
-        });
-        
+
         $scope.trackBooking = function () {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 var type =  null,
                     timestamp = moment(new Date()).seconds(0);
                 
-                if ($scope.bookings.length === 0 || $scope.bookings[0].type === BOOKING_LEAVING) {
+                if ($scope.bookings.length === 0 ||
+                    $scope.bookings[0].type === BOOKING_LEAVING
+                ) {
                     type = BOOKING_COMING;
                 } else {
                     type = BOOKING_LEAVING;
@@ -346,12 +373,14 @@ detectIDB(function (idb_capability) {
                         'type': type,
                         'timestamp': timestamp.unix()
                     })
-                    .then(updateBookings, alertInsertBookingFailed);
+                    .then(updateBookings);
             });
         };
         
         $scope.deleteBooking = function (booking) {
-            $translate(['TOAST_DELETE_SINGLE', 'UNDO']).then(function (translations) {
+            $translate([
+                'TOAST_DELETE_SINGLE', 'UNDO'
+            ]).then(function (translations) {
                 var idx = $scope.bookings.indexOf(booking),
                     toast = $mdToast.simple();
 
@@ -382,7 +411,11 @@ detectIDB(function (idb_capability) {
         };
         
         $scope.deleteAllBookings = function (evt) {
-            $translate(['TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL', 'DIALOG_CONTENT_DELETE_ALL', 'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS', 'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO']).then(function (translations) {
+            $translate([
+                'TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL',
+                'DIALOG_CONTENT_DELETE_ALL', 'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS',
+                'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO']
+            ).then(function (translations) {
                 var confirm = $mdDialog.confirm();
 
                 confirm
@@ -426,17 +459,135 @@ detectIDB(function (idb_capability) {
             });
         };
 
-        $scope.showEditBookingDialog = function (evt, booking) {
-            $mdDialog.show({
-                contoler: EditBookingDialogController,
-                contentElement: '#dialogEditBooking',
-                parent: angular.element(document.body),
-                targetEvent: evt,
-                clickOutsideToClose: true
+        $scope.showManualBookingView = function (evt, booking) {
+            var manualBooking = $scope.manualBooking,
+                date, time, type, is_new, old_key;
+            
+            if (booking) {
+                date = booking.timestamp.toDate();
+                time = booking.timestamp.toDate();
+                type = booking.type;
+            } else {
+                date = getToday();
+                time = '';
+                type = null;
+            }
+            
+            manualBooking.oldBooking = booking;
+            manualBooking.new = !!booking;
+            manualBooking.date = date;
+            manualBooking.time = time;
+            manualBooking.type = type;
+            
+            $scope.showView('manualBooking');
+        };
+        
+        $scope.hideManualBookingView = function (evt) {
+            $scope.showView('main');
+        };
+        
+        $scope.saveManualBooking = function (evt) {
+            $translate([
+                'TOAST_UPDATE_BOOKING', 'UNDO'
+            ]).then(function (translations) {
+                var toast = $mdToast.simple(),
+                    manualBooking = $scope.manualBooking,
+                    time = manualBooking.time,
+                    type = manualBooking.type,
+                    timestamp = moment(manualBooking.date),
+                    old_timestamp,
+                    old_type;
+                
+                timestamp
+                    .hours(time.getHours())
+                    .minutes(time.getMinutes())
+                    .seconds(time.getSeconds())
+                    .milliseconds(time.getMilliseconds());
+                
+                $scope.hideManualBookingView();
+                
+                if (manualBooking.oldBooking) {
+                    old_timestamp = manualBooking.oldBooking.timestamp,
+                    old_type = manualBooking.oldBooking.type;
+                    
+                    manualBooking.oldBooking.timestamp = timestamp;
+                    manualBooking.oldBooking.type = type;
+
+                    toast
+                        .textContent(translations.TOAST_UPDATE_BOOKING)
+                        .action(translations.UNDO)
+                        .highlightAction(true)
+                        .highlightClass('md-primary')
+                        .hideDelay(TOAST_DELAY);
+
+                    $mdToast
+                        .show(toast)
+                        .then(function (response) {
+                            if (response === undefined) {
+                                storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                    store.delete(old_timestamp.unix());
+
+                                    store
+                                        .insert({
+                                            'type': type,
+                                            'timestamp': timestamp.unix()
+                                        })
+                                        .then(function () {
+                                            $scope.hideManualBookingView();
+                                        });
+                                });
+                            } else {
+                                manualBooking.oldBooking.timestamp = old_timestamp;
+                                manualBooking.oldBooking.type = old_type;
+                            }
+                        })
+                        .then(updateBookings);
+                } else {
+                    storage.openStore(OBJECT_STORE_NAME, function (store) {
+                        store
+                            .insert({
+                                'type': type,
+                                'timestamp': timestamp.unix()
+                            })
+                            .then(updateBookings);
+                    })
+                }
             });
         };
-
+        
         $scope.navigator = navigator;
+        
+        $translate(['BOOKING_COMING', 'BOOKING_LEAVING'])
+            .then(function (translations) {
+                $scope.manualBooking = {
+                    new: true,
+                    type: null,
+                    date: getToday(),
+                    time: '',
+                    availableTypes: [
+                        {
+                            value: BOOKING_COMING,
+                            html: translations.BOOKING_COMING
+                        },
+                        {
+                            value: BOOKING_LEAVING,
+                            html: translations.BOOKING_LEAVING
+                        }
+                    ],
+                    oldBooking: null,
+                };
+            });
+        
+        function getToday () {
+            var today = new Date();
+            
+            today.setHours(0);
+            today.setMinutes(0);
+            today.setSeconds(0);
+            today.setMilliseconds(0);
+            
+            return today;
+        }
         
         (function () {
             updateBookings();
@@ -445,77 +596,246 @@ detectIDB(function (idb_capability) {
     }
 
     angular
-        .module('TimeTrackr', ['ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate'])
+        .module(
+            MODULE_NAME,
+            [
+                'ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate',
+                'ngMessages'
+            ]
+        )
         .controller('TimeTrackrCtrl', TimeTrackrCtrl)
+        .config(function ($mdDateLocaleProvider) {
+            $mdDateLocaleProvider.formatDate = function (date) {
+                return moment(date).format('YYYY-MM-DD');
+            };
+        })
         .config(function ($translateProvider) {
             $translateProvider
                 .translations('en_US', {
-                    'TOAST_DELETE_SINGLE': 'Deleted booking',
-                    'TOAST_DELETE_ALL': 'Deleted all bookings.',
-                    'UNDO': 'undo',
-                    'BOOKING_COMING': 'coming',
-                    'BOOKING_LEAVING': 'leaving',
-                    'OCLOCK': 'o\'clock',
-                    'NOT_AVAILABLE': 'Not yet available!',
-                    'NO_BOOKINGS_BY_NOW': 'There are no bookings by now',
-                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Click here to delete all tracked bookings',
-                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Delete all tracked bookings',
-                    'LABEL_DELETE_ALL_BOOKINGS': 'Delete all bookings',
-                    'DIALOG_TITLE_DELETE_ALL': 'Do you really want to delete all bookings?',
-                    'DIALOG_CONTENT_DELETE_ALL': 'If you confirm this, really ALL bookings are beeing deleted!',
-                    'DIALOG_CONFIRM_DELETE_ALL': 'Yes, I do!',
-                    'DIALOG_CANCEL_DELETE_ALL': 'Maybe not',
-                    'DIALOG_TITLE_EDIT_BOOKING': 'Edit booking',
-                    'DIALOG_TITLE_INSERT_FAILED': 'Failed to track booking',
-                    'DIALOG_CONTENT_INSERT_FAILED': 'We could not add your booking. Note that a booking can only be tracked once per minute.',
-                    'DAILY_WORKINGTIME': 'Daily working time',
-                    'DAILY_WORKINGTIME_PLACEHOLDER': '8 h',
-                    'DAILY_RESTPERIOD': 'Daily rest period',
-                    'DAILY_RESTPERIOD_PLACEHOLDER': '11 h',
-                    'MAX_DAILY_WORKINGTIME': 'Maximum daily working time',
-                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': '10 h',
-                    'OK': 'Ok',
-                    'CANCEL': 'Cancel',
-                    'SUBHEADER_MISC_SETTINGS': 'Miscellaneous',
-                    'SUBHEADER_WORKINGTIME_SETTINGS': 'Working time settings',
-                    'SUBHEADER_ABOUT_SETTINGS': 'About TimeTrackr',
-                    'DATABASE_ENGINE': 'Database engine',
-                    'DATABASE_ENGINE_USED': 'Using',
-                    'DEVELOPED_BY': 'Developed by'
+                    'TOAST_DELETE_SINGLE': (
+                        'Deleted booking.'
+                    ),
+                    'TOAST_DELETE_ALL': (
+                        'Deleted all bookings.'
+                    ),
+                    'TOAST_UPDATE_BOOKING': (
+                        'Updated booking.'
+                    ),
+                    'TOAST_INSERT_BOOKING': (
+                        'Inserted booking.'
+                    ),
+                    'UNDO': (
+                        'undo'
+                    ),
+                    'BOOKING_COMING': (
+                        'coming'
+                    ),
+                    'BOOKING_LEAVING': (
+                        'leaving'
+                    ),
+                    'OCLOCK': (
+                        'o\'clock'
+                    ),
+                    'NOT_AVAILABLE': (
+                        'Not yet available!'
+                    ),
+                    'NO_BOOKINGS_BY_NOW': (
+                        'There are no bookings by now.'
+                    ),
+                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': (
+                        'Click here to delete all tracked bookings'
+                    ),
+                    'LABEL_BOOKING_TYPE': (
+                        'Type'
+                    ),
+                    'LABEL_BOOKING_DATE': (
+                        'Date'
+                    ),
+                    'LABEL_BOOKING_TIME': (
+                        'Time'
+                    ),
+                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': (
+                        'Delete all tracked bookings'
+                    ),
+                    'LABEL_DELETE_ALL_BOOKINGS': (
+                        'Delete all bookings'
+                    ),
+                    'DIALOG_TITLE_DELETE_ALL': (
+                        'Do you really want to delete all bookings?'
+                    ),
+                    'DIALOG_CONTENT_DELETE_ALL': (
+                        'If you confirm this, really ALL bookings are beeing deleted!'
+                    ),
+                    'DIALOG_CONFIRM_DELETE_ALL': (
+                        'Yes, I do!'
+                    ),
+                    'DIALOG_CANCEL_DELETE_ALL': (
+                        'Maybe not'
+                    ),
+                    'DIALOG_TITLE_EDIT_BOOKING': (
+                        'Edit booking'
+                    ),
+                    'DAILY_WORKINGTIME': (
+                        'Daily working time'
+                    ),
+                    'DAILY_WORKINGTIME_PLACEHOLDER': (
+                        '8 h'
+                    ),
+                    'DAILY_RESTPERIOD': (
+                        'Daily rest period'
+                    ),
+                    'DAILY_RESTPERIOD_PLACEHOLDER': (
+                        '11 h'
+                    ),
+                    'MAX_DAILY_WORKINGTIME': (
+                        'Maximum daily working time'
+                    ),
+                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': (
+                        '10 h'
+                    ),
+                    'SAVE': (
+                        'Save'
+                    ),
+                    'OK': (
+                        'Ok'
+                    ),
+                    'CANCEL': (
+                        'Cancel'
+                    ),
+                    'SUBHEADER_MISC_SETTINGS': (
+                        'Miscellaneous'
+                    ),
+                    'SUBHEADER_WORKINGTIME_SETTINGS': (
+                        'Working time settings'
+                    ),
+                    'SUBHEADER_ABOUT_SETTINGS': (
+                        'About TimeTrackr'
+                    ),
+                    'DATABASE_ENGINE': (
+                        'Database engine'
+                    ),
+                    'DATABASE_ENGINE_USED': (
+                        'Using'
+                    ),
+                    'DEVELOPED_BY': (
+                        'Developed by'
+                    ),
+                    'FORMAT_TIME': (
+                        'Format: HH:MM'
+                    )
                 })
                 .translations('de_DE', {
-                    'TOAST_DELETE_SINGLE': 'Buchung wurde gelöscht',
-                    'TOAST_DELETE_ALL': 'Alle Buchungen wurden gelöscht.',
-                    'UNDO': 'Rückgängig',
-                    'BOOKING_COMING': 'kommen',
-                    'BOOKING_LEAVING': 'gehen',
-                    'OCLOCK': 'Uhr',
-                    'NOT_AVAILABLE': 'Noch nicht verfügbar!',
-                    'NO_BOOKINGS_BY_NOW': 'Momentan sind keine aufgezeichneten Buchungen vorhanden',
-                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Klicken Sie hier, um alle aufgezeichneten Buchungen zu löschen',
-                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': 'Delete all tracked bookings',
-                    'LABEL_DELETE_ALL_BOOKINGS': 'Alle Buchungen löschen',
-                    'DIALOG_TITLE_DELETE_ALL': 'Möchten Sie wirklich alle Buchungen löschen?',
-                    'DIALOG_CONTENT_DELETE_ALL': 'Wenn Sie dies bestätigen, werden wirklich ALLE Buchungen gelöscht!',
-                    'DIALOG_CONFIRM_DELETE_ALL': 'Ja, ich will!',
-                    'DIALOG_CANCEL_DELETE_ALL': 'Lieber nicht',
-                    'DIALOG_TITLE_EDIT_BOOKING': 'Buchung bearbeiten',
-                    'DIALOG_TITLE_INSERT_FAILED': 'Die Buchung konnte nicht angelegt werden',
-                    'DIALOG_CONTENT_INSERT_FAILED': 'Wir konnten Ihre Buchung nicht anlegen. Bitte beachten Sie, dass eine Buchung nur einmal pro Minute getätigt werden kann.',
-                    'DAILY_WORKINGTIME': 'Tägliche Arbeitszeit',
-                    'DAILY_WORKINGTIME_PLACEHOLDER': '8 h',
-                    'DAILY_RESTPERIOD': 'Tägliche Ruhezeit',
-                    'DAILY_RESTPERIOD_PLACEHOLDER': '11 h',
-                    'MAX_DAILY_WORKINGTIME': 'Maximale tägliche Arbeitszeit',
-                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': '10 h',
-                    'OK': 'Ok',
-                    'CANCEL': 'Abbrechen',
-                    'SUBHEADER_MISC_SETTINGS': 'Sonstiges',
-                    'SUBHEADER_WORKINGTIME_SETTINGS': 'Arbeitszeiteinstellungen',
-                    'SUBHEADER_ABOUT_SETTINGS': 'Über TimeTrackr',
-                    'DATABASE_ENGINE': 'Datenbanktechnik',
-                    'DATABASE_ENGINE_USED': 'Nutze',
-                    'DEVELOPED_BY': 'Entwickelt von'
+                    'TOAST_DELETE_SINGLE': (
+                        'Buchung wurde gelöscht.'
+                    ),
+                    'TOAST_DELETE_ALL': (
+                        'Alle Buchungen wurden gelöscht.'
+                    ),
+                    'TOAST_UPDATE_BOOKING': (
+                        'Buchung wurde aktualisiert.'
+                    ),
+                    'TOAST_INSERT_BOOKING': (
+                        'Buchung wurde eingefügt.'
+                    ),
+                    'UNDO': (
+                        'Rückgängig'
+                    ),
+                    'BOOKING_COMING': (
+                        'kommen'
+                    ),
+                    'BOOKING_LEAVING': (
+                        'gehen'
+                    ),
+                    'OCLOCK': (
+                        'Uhr'
+                    ),
+                    'NOT_AVAILABLE': (
+                        'Noch nicht verfügbar!'
+                    ),
+                    'NO_BOOKINGS_BY_NOW': (
+                        'Momentan sind keine aufgezeichneten Buchungen vorhanden.'
+                    ),
+                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': (
+                        'Klicken Sie hier, um alle aufgezeichneten Buchungen zu löschen'
+                    ),
+                    'LABEL_BOOKING_TYPE': (
+                        'Art'
+                    ),
+                    'LABEL_BOOKING_DATE': (
+                        'Datum'
+                    ),
+                    'LABEL_BOOKING_TIME': (
+                        'Uhrzeit'
+                    ),
+                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': (
+                        'Delete all tracked bookings'
+                    ),
+                    'LABEL_DELETE_ALL_BOOKINGS': (
+                        'Alle Buchungen löschen'
+                    ),
+                    'DIALOG_TITLE_DELETE_ALL': (
+                        'Möchten Sie wirklich alle Buchungen löschen?'
+                    ),
+                    'DIALOG_CONTENT_DELETE_ALL': (
+                        'Wenn Sie dies bestätigen, werden wirklich ALLE Buchungen gelöscht!'
+                    ),
+                    'DIALOG_CONFIRM_DELETE_ALL': (
+                        'Ja, ich will!'
+                    ),
+                    'DIALOG_CANCEL_DELETE_ALL': (
+                        'Lieber nicht'
+                    ),
+                    'DIALOG_TITLE_EDIT_BOOKING': (
+                        'Buchung bearbeiten'
+                    ),
+                    'DAILY_WORKINGTIME': (
+                        'Tägliche Arbeitszeit'
+                    ),
+                    'DAILY_WORKINGTIME_PLACEHOLDER': (
+                        '8 h'
+                    ),
+                    'DAILY_RESTPERIOD': (
+                        'Tägliche Ruhezeit'
+                    ),
+                    'DAILY_RESTPERIOD_PLACEHOLDER': (
+                        '11 h'
+                    ),
+                    'MAX_DAILY_WORKINGTIME': (
+                        'Maximale tägliche Arbeitszeit'
+                    ),
+                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': (
+                        '10 h'
+                    ),
+                    'SAVE': (
+                        'Speichern'
+                    ),
+                    'OK': (
+                        'Ok'
+                    ),
+                    'CANCEL': (
+                        'Abbrechen'
+                    ),
+                    'SUBHEADER_MISC_SETTINGS': (
+                        'Sonstiges'
+                    ),
+                    'SUBHEADER_WORKINGTIME_SETTINGS': (
+                        'Arbeitszeiteinstellungen'
+                    ),
+                    'SUBHEADER_ABOUT_SETTINGS': (
+                        'Über TimeTrackr'
+                    ),
+                    'DATABASE_ENGINE': (
+                        'Datenbanktechnik'
+                    ),
+                    'DATABASE_ENGINE_USED': (
+                        'Nutze'
+                    ),
+                    'DEVELOPED_BY': (
+                        'Entwickelt von'
+                    ),
+                    'FORMAT_TIME': (
+                        'Format: HH:MM'
+                    )
                 })
                 .preferredLanguage('de_DE')
                 .useSanitizeValueStrategy('sanitizeParameters');
@@ -547,12 +867,15 @@ detectIDB(function (idb_capability) {
 
     if (database_backend === DATABASE_IDB) {
         angular
-            .module('TimeTrackr')
+            .module(MODULE_NAME)
             .config(function ($indexedDBProvider) {
                 $indexedDBProvider
                     .connection(IDB_NAME)
                     .upgradeDatabase(1, function (evt, db, tx) {
-                        var objStore = db.createObjectStore('trackedActions', { keyPath: 'timestamp' });
+                        var objStore = db.createObjectStore(
+                                'trackedActions',
+                                { keyPath: 'timestamp' }
+                            );
 
                         objStore.createIndex('type_idx', 'type', { unique: false });
                         objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
@@ -561,14 +884,23 @@ detectIDB(function (idb_capability) {
                         db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
                     })
                     .upgradeDatabase(3, function (evt, db, tx) {
-                        var objStore = db.createObjectStore('trackedBookings', { keyPath: 'timestamp' });
+                        var objStore = db.createObjectStore(
+                               'trackedBookings',
+                               { keyPath: 'timestamp' }
+                            );
 
                         objStore.createIndex('type_idx', 'type', { unique: false });
                         objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
                     })
                     .upgradeDatabase(4, function (evt, db, tx) {
-                        var bookings = db.createObjectStore('bookings', { keyPath: 'timestamp' }),
-                            config = db.createObjectStore('config', { keyPath: 'setting' }),
+                        var bookings = db.createObjectStore(
+                                'bookings',
+                                { keyPath: 'timestamp' }
+                            ),
+                            config = db.createObjectStore(
+                                'config',
+                                { keyPath: 'setting' }
+                            ),
                             TrackrConfig = tx.objectStore('TrackrConfig'),
                             trackedBookings = tx.objectStore('trackedBookings');
                         
@@ -609,17 +941,32 @@ detectIDB(function (idb_capability) {
         if (local_storage_version < 1) {
             console.log('Upgrading LocalStorage from 0 to 1');
             local_storage_version += 1;
-            localStorage.setItem('trackedActions', angular.toJson(angular.fromJson(localStorage.getItem('trackedActions') || {})));
+            localStorage.setItem(
+                'trackedActions',
+                angular.toJson(
+                    angular.fromJson(localStorage.getItem('trackedActions') || {})
+                )
+            );
         }
         if (local_storage_version < 2) {
             console.log('Upgrading LocalStorage from 1 to 2');
             local_storage_version += 1;
-            localStorage.setItem('TrackrConfig', angular.toJson(angular.fromJson(localStorage.getItem('TrackrConfig') || {})));
+            localStorage.setItem(
+                'TrackrConfig',
+                angular.toJson(
+                    angular.fromJson(localStorage.getItem('TrackrConfig') || {})
+                )
+            );
         }
         if (local_storage_version < 3) {
             console.log('Upgrading LocalStorage from 2 to 3');
             local_storage_version += 1;
-            localStorage.setItem('trackedBookings', angular.toJson(angular.fromJson(localStorage.getItem('trackedBookings') || {})));
+            localStorage.setItem(
+                'trackedBookings',
+                angular.toJson(
+                    angular.fromJson(localStorage.getItem('trackedBookings') || {})
+                )
+            );
         }
         if (local_storage_version < 4) {
             console.log('Upgrading LocalStorage from 3 to 4');
@@ -638,7 +985,8 @@ detectIDB(function (idb_capability) {
         localStorage[LOCAL_STORAGE_VERSION_KEY] = angular.toJson(local_storage_version);
     }
     
-    angular.bootstrap(document, ['TimeTrackr'])
+    angular
+        .bootstrap(document, [MODULE_NAME]);
 });
 
 // TimeSeries testing
@@ -669,7 +1017,7 @@ detectIDB(function (idb_capability) {
             prev_bk_type = TYPE_LEAVING;
         
         for (idx_ts = 0; idx_bk < timeseries.length; idx_bk += 1) {
-            
+            //pass
         }
     }
     
