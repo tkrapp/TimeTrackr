@@ -719,6 +719,24 @@ detectIDB(function (idb_capability) {
                     ),
                     'FORMAT_TIME': (
                         'Format: HH:MM'
+                    ),
+                    'REQUIRED_TIME': (
+                        'Please provide a time for the booking.'
+                    ),
+                    'INVALID_TIME': (
+                        'Please provide a valid time for the booking.'
+                    ),
+                    'REQUIRED_TYPE': (
+                        'Please choose a booking type.'
+                    ),
+                    'INVALIDE_TYPE': (
+                        'Please choose a valid booking type.'
+                    ),
+                    'REQUIRED_DATE': (
+                        'Please select or enter a booking date.'
+                    ),
+                    'INVALID_DATE': (
+                        'Please enter a valid booking date.'
                     )
                 })
                 .translations('de_DE', {
@@ -832,6 +850,24 @@ detectIDB(function (idb_capability) {
                     ),
                     'FORMAT_TIME': (
                         'Format: HH:MM'
+                    ),
+                    'REQUIRED_TIME': (
+                        'Bitte geben Sie eine Uhrzeit für die Buchung ein.'
+                    ),
+                    'INVALID_TIME': (
+                        'Bitte geben Sie eine gültige Uhrzeit für die Buchung ein.'
+                    ),
+                    'REQUIRED_TYPE': (
+                        'Bitte wählen Sie eine Buchungsart aus.'
+                    ),
+                    'INVALIDE_TYPE': (
+                        'Bitte wählen Sie eine gültige Buchungsart aus.'
+                    ),
+                    'REQUIRED_DATE': (
+                        'Bitte wählen Sie ein Buchungsdatum aus.'
+                    ),
+                    'INVALID_DATE': (
+                        'Bitte geben Sie ein gültiges Buchungsdatum ein.'
                     )
                 })
                 .preferredLanguage('de_DE')
