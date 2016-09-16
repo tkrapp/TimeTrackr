@@ -215,6 +215,10 @@ detectIDB(function (idb_capability) {
             }
         };
         
+        $scope.focusInputElement = function (evt) {
+            console.log(this, evt);
+        };
+        
         $scope.bookings = [];
         $scope.databaseEngine = 'IndexedDB';
         if (storage instanceof window.LocalStorage) {
@@ -600,6 +604,25 @@ detectIDB(function (idb_capability) {
                 'ngMessages'
             ]
         )
+        .directive('focusMe', ['$timeout', '$parse', function ($timeout, $parse) {
+            return {
+                link: function (scope, element, attrs) {
+                    var model = $parse(attrs.focusMe);
+                    scope.$watch(model, function (value) {
+                        if (value === true) {
+                            $timeout(function () {
+                                element[0].focus();
+                                element[0].click();
+                            });
+                        }
+                    });
+                    
+                    element.bind('blur', function () {
+                        scope.$apply(model.assign(scope, false));
+                    });
+                }
+            }
+        }])
         .controller('TimeTrackrCtrl', TimeTrackrCtrl)
         .config(function ($mdDateLocaleProvider) {
             $mdDateLocaleProvider.formatDate = function (date) {
@@ -1062,27 +1085,3 @@ detectIDB(function (idb_capability) {
         }
     }
 }());
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
