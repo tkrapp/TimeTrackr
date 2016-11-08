@@ -1051,6 +1051,13 @@ detectIDB(function (idb_capability) {
     
     var TYPE_COMING = 0,
         TYPE_LEAVING = 1,
+        TYPE_WORKING = 2,
+        TYPE_ON_BREAK = 3,
+        BREAK_AFTER = 6 * 60 * 60 * 1000,
+        SECOND_BREAK_AFTER = 9 * 60 * 60 * 1000,
+        MAX_TIME = 10 * 60 * 60 * 1000,
+        FIRST_BREAK = 30 * 60 * 1000,
+        SECOND_BREAK = 15 * 60 * 1000,
         timeserieses = [
             [ // day with 30 min break
                 {'timestamp': moment("2016-07-22 06:30"), 'type': TYPE_COMING},
@@ -1063,25 +1070,110 @@ detectIDB(function (idb_capability) {
                 {'timestamp': moment("2016-07-22 14:00"), 'type': TYPE_LEAVING}
             ]
         ],
-        idx_ts,
-        idx_bk,
-        booking,
-        timeseries;
+        idx_ts, idx_bk, booking, timeseries, valid, check_result, ts, prev_ts;
     
     function checkTimeSeriesValidity (timeseries) {
-        var idx_ts,
-            prev_bk_type = TYPE_LEAVING;
+        var prev_bk_type = TYPE_LEAVING,
+            idx_bk, bk;
         
-        for (idx_ts = 0; idx_bk < timeseries.length; idx_bk += 1) {
-            //pass
+        for (idx_bk = 0; idx_bk < timeseries.length; idx_bk += 1) {
+            bk = timeseries[idx_bk];
+            
+            if ((bk.type === TYPE_COMING && prev_bk_type === TYPE_COMING) ||
+                (bk.type === TYPE_LEAVING && prev_bk_type === TYPE_LEAVING)) {
+                return idx_bk;
+            }
+            
+            prev_bk_type = bk.type;
         }
-    }
+        
+        return -1;
+    };
+    
+    function getReadableDiff (milliseconds) {
+        var seconds = milliseconds / 1000,
+            hours, minutes, remainder;
+        
+        hours = parseInt(seconds / 3600);
+        remainder = seconds % 3600;
+        minutes = parseInt(remainder / 60);
+        
+        return hours + ':' + minutes;
+    };
+    
+    function validateTimePair (pair) {
+        
+    };
+    
+    function calcTimes (timeseries) {
+        var pairs = [],
+            idx_bk, pair_start, pair_end;
+        
+        for (idx_bk = 0; idx_bk < timeseries.length; idx_bk += 2) {
+            pair_start = timeseries[idx_bk].timestamp;
+            pair_end = timeseries[idx_bk + 1] ? timeseries[idx_bk + 1].timestamp : null;
+            
+            if (idx_bk > 0) {
+                pairs.push({
+                    'start': timeseries[idx_bk - 1].timestamp,
+                    'end': pair_start,
+                    'type': TYPE_ON_BREAK,
+                    'synthetic': false
+                });
+            }
+            
+            pairs.push({
+                'start': pair_start,
+                'end': pair_end,
+                'type': TYPE_WORKING,
+                'synthetic': false
+            });
+        }
+        
+        return pairs;
+    };
     
     for (idx_ts = 0; idx_ts < timeserieses.length; idx_ts += 1) {
         timeseries = timeserieses[idx_ts];
+        check_result = checkTimeSeriesValidity(timeseries);
+        valid = check_result === -1;
         
-        for (idx_bk = 0; idx_bk < timeseries.length; idx_bk += 1) {
+        if (valid === true) {
+            var pairs = calcTimes(timeseries),
+                pair, idx_pair;
             
+            var time_working = 0,
+                time_on_break = 0;
+            
+            console.log(pairs);
+            for (idx_pair = 0; idx_pair < pairs.length; idx_pair += 1) {
+                pair = pairs[idx_pair];
+                
+                console.log(pair.start.format('HH:mm'), pair.end.format('HH:mm'));
+                console.log(getReadableDiff(pair.end.diff(pair.start)));
+                console.log(getReadableDiff(BREAK_AFTER));
+                
+                if (pair.type === TYPE_WORKING) {
+                    time_working += pair.end.diff(pair.start);
+                } else {
+                    time_on_break += pair.end.diff(pair.start);
+                }
+            }
+            
+            console.log('working', getReadableDiff(time_working));
+            console.log('break', getReadableDiff(time_on_break));
+        } else {
+            prev_ts = timeseries[check_result - 1];
+            ts = timeseries[check_result];
+            
+            if (prev_ts) {
+                console.log('Invalid timeseries. Check positions ' + (check_result - 1) + ' and ' + check_result);
+                console.log(prev_ts);
+                console.log(ts);
+            } else {
+                console.log('Invalid timeseries. Check first element.');
+                console.log(ts);
+            }
         }
     }
 }());
