@@ -39,7 +39,7 @@
                     <span>TimeTrackr</span>
                 </div>
             </md-toolbar>
-            <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="true">
+            <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="false">
                 <md-tab layout="column" id="tab-tracking" class="md-primary">
                     <md-tab-label>
                         <md-icon md-svg-icon="static/icons/timer.svg"></md-icon>
@@ -70,7 +70,20 @@
                         <md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
                     </md-tab-label>
                     <md-tab-body>
-                        <md-content class="md-padding" translate="NOT_AVAILABLE"></md-content>
+                        <md-content class="md-padding">
+                            <md-button ng-click="updateTimeTable($event)" translate="UPDATE_TIMETABLE"></md-button>
+                        </md-content>
+                        <md-list class="list-tracking">
+                            <md-list-item class="md-2-line" ng-repeat="timePair in timeTable.timePairs">
+                                <div class="md-list-item-text">
+                                    <h3 translate="{{ timePair.type }}"></h3>
+                                    <p>
+                                        {{ timePair.start.format('HH:mm') }} -
+                                        {{ timePair.end.format('HH:mm') }}
+                                    </p>
+                                </div>
+                            </md-list-item>
+                        </md-list>
                     </md-tab-body>
                 </md-tab>
                 <md-tab id="tab-settings">
