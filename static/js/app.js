@@ -1041,6 +1041,9 @@ detectIDB(function (idb_capability) {
                     'LABEL_ARIA_DELETE_ALL_BOOKINGS': (
                         'Click here to delete all tracked bookings'
                     ),
+                    'LABEL_ARIA_UPDATE_TIMELINE': (
+                        'Click here to update the timeline'
+                    ),
                     'LABEL_BOOKING_TYPE': (
                         'Type'
                     ),
@@ -1049,6 +1052,9 @@ detectIDB(function (idb_capability) {
                     ),
                     'LABEL_BOOKING_TIME': (
                         'Time'
+                    ),
+                    'LABEL_UPDATE_TIMELINE': (
+                        'Update timeline'
                     ),
                     'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': (
                         'Delete all tracked bookings'
@@ -1115,6 +1121,12 @@ detectIDB(function (idb_capability) {
                     ),
                     'SUBHEADER_ABOUT_SETTINGS': (
                         'About TimeTrackr'
+                    ),
+                    'SUBHEADER_TIMELINE': (
+                        'Calculated timeline'
+                    ),
+                    'SUBHEADER_TIMELINE_INFO': (
+                        'Additional information'
                     ),
                     'DATABASE_ENGINE': (
                         'Database engine'
@@ -1193,6 +1205,9 @@ detectIDB(function (idb_capability) {
                     'LABEL_ARIA_DELETE_ALL_BOOKINGS': (
                         'Klicken Sie hier, um alle aufgezeichneten Buchungen zu löschen'
                     ),
+                    'LABEL_ARIA_UPDATE_TIMELINE': (
+                        'Klicken Sie hier, um den Zeitstrahl zu aktualisieren'
+                    ),
                     'LABEL_BOOKING_TYPE': (
                         'Art'
                     ),
@@ -1201,6 +1216,9 @@ detectIDB(function (idb_capability) {
                     ),
                     'LABEL_BOOKING_TIME': (
                         'Uhrzeit'
+                    ),
+                    'LABEL_UPDATE_TIMELINE': (
+                        'Zeitstrahl aktualisieren'
                     ),
                     'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': (
                         'Delete all tracked bookings'
@@ -1267,6 +1285,12 @@ detectIDB(function (idb_capability) {
                     ),
                     'SUBHEADER_ABOUT_SETTINGS': (
                         'Über TimeTrackr'
+                    ),
+                    'SUBHEADER_TIMELINE': (
+                        'Berechneter Zeitstrahl'
+                    ),
+                    'SUBHEADER_TIMELINE_INFO': (
+                        'Zusätzliche Informationen'
                     ),
                     'DATABASE_ENGINE': (
                         'Datenbanktechnik'

@@ -70,113 +70,125 @@
                         <md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
                     </md-tab-label>
                     <md-tab-body>
-                        <md-content class="md-padding">
-                            <md-button ng-click="updateTimeTable($event)" translate="UPDATE_TIMETABLE"></md-button>
-                        </md-content>
-                        <md-content class="md-padding">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 xmlns:xlink="http://www.w3.org/1999/xlink"
-                                 ng-attr-height="{{ timeTable.svg.height }}">
-                                <style type="text/css">
-                                    line.outer {
-                                        stroke: #03a9f4;
-                                        stroke-width: 8;
-                                    }
-
-                                    line.outer.TYPE_ON_BREAK {
-                                        stroke: #4caf50;
-                                    }
-                                    
-                                    line.outer.TYPE_AT_HOME {
-                                        stroke: #cccccc;
-                                    }
-
-                                    line.inner {
-                                        stroke: rgba(0, 0, 0, 0.25);
-                                        stroke-width: 4;
-                                    }
-
-                                    ellipse.outer {
-                                        fill: #90a4ae;
-                                    }
-
-                                    ellipse.inner {
-                                        fill: #6C7B82;
-                                    }
-
-                                    text.BOOKING_DAILY_WORKING_TIME {
-                                        fill: #0277bd;
-                                    }
-                                </style>
-                                <line ng-repeat-start="timePair in timeTable.timePairs"
-                                      ng-attr-class="{{ ['outer', timePair.type].join(' ') }}"
-                                      ng-attr-x1="{{ timePair.svg.x }}"
-                                      ng-attr-y1="{{ timePair.svg.y1 }}"
-                                      ng-attr-x2="{{ timePair.svg.x }}"
-                                      ng-attr-y2="{{ timePair.svg.y2 }}" />
-                                <text ng-attr-x="{{ timePair.svg.point_text_x }}"
-                                      ng-attr-y="{{ timePair.svg.point_text_y1 }}">
-                                    {{ timePair.start.format('HH:mm') }}
-                                </text>
-                                <text ng-attr-x="{{ timePair.svg.type_text_x }}"
-                                      ng-attr-y="{{ timePair.svg.type_text_y }}">
-                                    {{ timePair.type | translate }}
-                                </text>
-                                <text ng-attr-x="{{ timePair.svg.type_text_x * 3 }}"
-                                      ng-attr-y="{{ timePair.svg.type_text_y }}">
-                                    {{ timePair.duration }}
-                                </text>
-                                <text ng-attr-x="{{ timePair.svg.type_text_x * 4 }}"
-                                      ng-attr-y="{{ timePair.svg.type_text_y }}">
-                                    {{ timePair.synthetic | translate }}
-                                </text>
-                                <text ng-attr-x="{{ timePair.svg.type_text_x * 2 }}"
-                                      ng-attr-y="{{ timePair.svg.point_text_y2 }}"
-                                      ng-attr-class="{{ timePair.dailyWorkingTime }}"
-                                      ng-if="timePair.dailyWorkingTime">
-                                    {{ timePair.dailyWorkingTime | translate }}
-                                </text>
-                                <text ng-attr-x="{{ timePair.svg.point_text_x}}"
-                                      ng-attr-y="{{ timePair.svg.point_text_y2 }}"
-                                      ng-repeat-end
-                                      ng-if="$last">
-                                    {{ timePair.end.format('HH:mm') }}
-                                </text>
-                                <ellipse ng-repeat-start="timePair in timeTable.timePairs"
-                                         ng-if="$first"
-                                         ng-attr-cx="{{ timePair.svg.x }}"
-                                         ng-attr-cy="{{ timePair.svg.y1 }}"
-                                         rx="10"
-                                         ry="10"
-                                         class="outer" />
-                                <ellipse ng-repeat-end
-                                         ng-attr-cx="{{ timePair.svg.x }}"
-                                         ng-attr-cy="{{ timePair.svg.y2 }}"
-                                         ng-attr-class="{{ ['outer', timePair.dailyWorkingTime].join(' ') }}"
-                                         rx="10"
-                                         ry="10"
-                                         class="outer" />
-                                <line ng-repeat-start="timePair in timeTable.timePairs"
-                                      ng-attr-x1="{{ timePair.svg.x }}"
-                                      ng-attr-y1="{{ timePair.svg.y1 + 4}}"
-                                      ng-attr-x2="{{ timePair.svg.x }}"
-                                      ng-attr-y2="{{ timePair.svg.y2 - 4 }}"
-                                      class="inner" />
-                                <ellipse ng-attr-cx="{{ timePair.svg.x }}"
-                                         ng-attr-cy="{{ timePair.svg.y1 }}"
-                                         rx="6"
-                                         ry="6"
-                                         class="inner" />
-                                <ellipse ng-repeat-end
-                                         ng-if="$last"
-                                         ng-attr-cx="{{ timePair.svg.x }}"
-                                         ng-attr-cy="{{ timePair.svg.y2 }}"
-                                         rx="6"
-                                         ry="6"
-                                         class="inner" />
-                            </svg>
-                        </md-content>
                         <md-list class="list-tracking">
+                            <md-subheader>
+                                {{ 'SUBHEADER_TIMELINE' | translate }}
+                            </md-subheader>
+                            <md-list-item class="secondary-button-padding"
+                                          ng-click="updateTimeTable($event)">
+                                <p translate="LABEL_UPDATE_TIMELINE"></p>
+                                <md-button class="md-secondary md-icon-button"
+                                           ng-attr-aria-label="{{ 'LABEL_ARIA_UPDATE_TIMELINE' | translate }}"
+                                           ng-click="updateTimeTable($event)">
+                                    <md-icon md-svg-icon="static/icons/update_gry.svg" />
+                                </md-button>
+                            </md-list-item>
+                            <md-list-item>
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     xmlns:xlink="http://www.w3.org/1999/xlink"
+                                     ng-attr-height="{{ timeTable.svg.height }}">
+                                    <style type="text/css">
+                                        line.outer {
+                                            stroke: #03a9f4;
+                                            stroke-width: 8;
+                                        }
+
+                                        line.outer.TYPE_ON_BREAK {
+                                            stroke: #4caf50;
+                                        }
+
+                                        line.outer.TYPE_AT_HOME {
+                                            stroke: #90a4ae;
+                                        }
+
+                                        line.inner {
+                                            stroke: rgba(0, 0, 0, 0.25);
+                                            stroke-width: 4;
+                                        }
+
+                                        ellipse.outer {
+                                            fill: #90a4ae;
+                                        }
+
+                                        ellipse.inner {
+                                            fill: #6C7B82;
+                                        }
+
+                                        text.BOOKING_DAILY_WORKING_TIME {
+                                            fill: #0277bd;
+                                        }
+                                    </style>
+                                    <line ng-repeat-start="timePair in timeTable.timePairs"
+                                          ng-attr-class="{{ ['outer', timePair.type].join(' ') }}"
+                                          ng-attr-x1="{{ timePair.svg.x }}"
+                                          ng-attr-y1="{{ timePair.svg.y1 }}"
+                                          ng-attr-x2="{{ timePair.svg.x }}"
+                                          ng-attr-y2="{{ timePair.svg.y2 }}" />
+                                    <text ng-attr-x="{{ timePair.svg.point_text_x }}"
+                                          ng-attr-y="{{ timePair.svg.point_text_y1 }}">
+                                        {{ timePair.start.format('HH:mm') }}
+                                    </text>
+                                    <text ng-attr-x="{{ timePair.svg.type_text_x }}"
+                                          ng-attr-y="{{ timePair.svg.type_text_y }}">
+                                        {{ timePair.type | translate }}
+                                    </text>
+                                    <text ng-attr-x="{{ timePair.svg.type_text_x * 3 }}"
+                                          ng-attr-y="{{ timePair.svg.type_text_y }}">
+                                        {{ timePair.duration }}
+                                    </text>
+                                    <text ng-attr-x="{{ timePair.svg.type_text_x * 4 }}"
+                                          ng-attr-y="{{ timePair.svg.type_text_y }}">
+                                        {{ timePair.synthetic | translate }}
+                                    </text>
+                                    <text ng-attr-x="{{ timePair.svg.type_text_x * 2 }}"
+                                          ng-attr-y="{{ timePair.svg.point_text_y2 }}"
+                                          ng-attr-class="{{ timePair.dailyWorkingTime }}"
+                                          ng-if="timePair.dailyWorkingTime">
+                                        {{ timePair.dailyWorkingTime | translate }}
+                                    </text>
+                                    <text ng-attr-x="{{ timePair.svg.point_text_x}}"
+                                          ng-attr-y="{{ timePair.svg.point_text_y2 }}"
+                                          ng-repeat-end
+                                          ng-if="$last">
+                                        {{ timePair.end.format('HH:mm') }}
+                                    </text>
+                                    <ellipse ng-repeat-start="timePair in timeTable.timePairs"
+                                             ng-if="$first"
+                                             ng-attr-cx="{{ timePair.svg.x }}"
+                                             ng-attr-cy="{{ timePair.svg.y1 }}"
+                                             rx="10"
+                                             ry="10"
+                                             class="outer" />
+                                    <ellipse ng-repeat-end
+                                             ng-attr-cx="{{ timePair.svg.x }}"
+                                             ng-attr-cy="{{ timePair.svg.y2 }}"
+                                             ng-attr-class="{{ ['outer', timePair.dailyWorkingTime].join(' ') }}"
+                                             rx="10"
+                                             ry="10"
+                                             class="outer" />
+                                    <line ng-repeat-start="timePair in timeTable.timePairs"
+                                          ng-attr-x1="{{ timePair.svg.x }}"
+                                          ng-attr-y1="{{ timePair.svg.y1 + 4}}"
+                                          ng-attr-x2="{{ timePair.svg.x }}"
+                                          ng-attr-y2="{{ timePair.svg.y2 - 4 }}"
+                                          class="inner" />
+                                    <ellipse ng-attr-cx="{{ timePair.svg.x }}"
+                                             ng-attr-cy="{{ timePair.svg.y1 }}"
+                                             rx="6"
+                                             ry="6"
+                                             class="inner" />
+                                    <ellipse ng-repeat-end
+                                             ng-if="$last"
+                                             ng-attr-cx="{{ timePair.svg.x }}"
+                                             ng-attr-cy="{{ timePair.svg.y2 }}"
+                                             rx="6"
+                                             ry="6"
+                                             class="inner" />
+                                </svg>
+                            </md-list-item>
+                            <md-subheader>
+                                {{ 'SUBHEADER_TIMELINE_INFO' | translate }}
+                            </md-subheader>
                             <md-list-item class="md-2-line">
                                 <div class="md-list-item-text">
                                     <h3 translate="TYPE_WORKING"></h3>
