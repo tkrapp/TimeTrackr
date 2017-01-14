@@ -6,11 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic" />
     <link rel="stylesheet" href="static/css/angular-material.min.css" />
     <link rel="stylesheet" href="static/css/app.css" />
-    
+
     <!-- Standard Webapp Tags -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#FF5722" />
@@ -21,7 +21,7 @@
     <link rel="icon" href="static/icons/launcher/launcher_icon_384.png" sizes="384x384"/>
     <link rel="icon" href="static/icons/launcher/launcher_icon_512.png" sizes="512x512"/>
     <link rel="icon" href="static/icons/launcher/launcher_icon_2048.png" sizes="2048x2048"/>
-    
+
     <!-- Apple Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -32,14 +32,14 @@
 </head>
 
 <body>
-    <div id="app-container" layout-fill ng-controller="TimeTrackrCtrl">
-        <div id="main-view" layout="column" layout-fill ng-cloak ng-show="views.main.visible">
+    <div id="app-container" layout-fill ng-controller="TimeTrackrCtrl" ng-cloak>
+        <div id="main-view" layout="column" layout-fill ng-show="views.main.visible">
             <md-toolbar class="site-content-toolbar">
                 <div class="md-toolbar-tools">
                     <span>TimeTrackr</span>
                 </div>
             </md-toolbar>
-            <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="true">
+            <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="false">
                 <md-tab layout="column" id="tab-tracking" class="md-primary">
                     <md-tab-label>
                         <md-icon md-svg-icon="static/icons/timer.svg"></md-icon>
@@ -53,10 +53,10 @@
                                     <p translate="{{ booking.type }}"></p>
                                 </div>
                                 <md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showManualBookingView($event, booking)">
-                                    <md-icon md-svg-icon="static/icons/edit_blk.svg"></md-icon>
+                                    <md-icon md-svg-icon="static/icons/edit_gry.svg"></md-icon>
                                 </md-button>
                                 <md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteBooking(booking)">
-                                    <md-icon md-svg-icon="static/icons/delete_blk.svg"></md-icon>
+                                    <md-icon md-svg-icon="static/icons/delete_gry.svg"></md-icon>
                                 </md-button>
                             </md-list-item>
                             <md-list-item ng-if="bookings.length === 0">
@@ -70,7 +70,126 @@
                         <md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
                     </md-tab-label>
                     <md-tab-body>
-                        <md-content class="md-padding" translate="NOT_AVAILABLE"></md-content>
+                        <md-content class="md-padding">
+                            <md-button ng-click="updateTimeTable($event)" translate="UPDATE_TIMETABLE"></md-button>
+                        </md-content>
+                        <md-content class="md-padding">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                                 ng-attr-height="{{ timeTable.svg.height }}">
+                                <style type="text/css">
+                                    line.outer {
+                                        stroke: #03a9f4;
+                                        stroke-width: 8;
+                                    }
+
+                                    line.outer.TYPE_ON_BREAK {
+                                        stroke: #4caf50;
+                                    }
+
+                                    line.inner {
+                                        stroke: rgba(0, 0, 0, 0.25);
+                                        stroke-width: 4;
+                                    }
+
+                                    ellipse.outer {
+                                        fill: #90a4ae;
+                                    }
+
+                                    ellipse.inner {
+                                        fill: #6C7B82;
+                                    }
+
+                                    text.BOOKING_DAILY_WORKING_TIME {
+                                        fill: #0277bd;
+                                    }
+                                </style>
+                                <line ng-repeat-start="timePair in timeTable.timePairs"
+                                      ng-attr-class="{{ ['outer', timePair.type].join(' ') }}"
+                                      ng-attr-x1="{{ timePair.svg.x }}"
+                                      ng-attr-y1="{{ timePair.svg.y1 }}"
+                                      ng-attr-x2="{{ timePair.svg.x }}"
+                                      ng-attr-y2="{{ timePair.svg.y2 }}" />
+                                <text ng-attr-x="{{ timePair.svg.point_text_x }}"
+                                      ng-attr-y="{{ timePair.svg.point_text_y1 }}">
+                                    {{ timePair.start.format('HH:mm') }}
+                                </text>
+                                <text ng-attr-x="{{ timePair.svg.type_text_x }}"
+                                      ng-attr-y="{{ timePair.svg.type_text_y }}">
+                                    {{ timePair.type | translate }}
+                                </text>
+                                <text ng-attr-x="{{ timePair.svg.type_text_x * 3 }}"
+                                      ng-attr-y="{{ timePair.svg.type_text_y }}">
+                                    {{ timePair.duration }}
+                                </text>
+                                <text ng-attr-x="{{ timePair.svg.type_text_x * 4 }}"
+                                      ng-attr-y="{{ timePair.svg.type_text_y }}">
+                                    {{ timePair.synthetic | translate }}
+                                </text>
+                                <text ng-attr-x="{{ timePair.svg.type_text_x * 2 }}"
+                                      ng-attr-y="{{ timePair.svg.point_text_y2 }}"
+                                      ng-attr-class="{{ timePair.dailyWorkingTime }}"
+                                      ng-if="timePair.dailyWorkingTime">
+                                    {{ timePair.dailyWorkingTime | translate }}
+                                </text>
+                                <text ng-attr-x="{{ timePair.svg.point_text_x}}"
+                                      ng-attr-y="{{ timePair.svg.point_text_y2 }}"
+                                      ng-repeat-end
+                                      ng-if="$last">
+                                    {{ timePair.end.format('HH:mm') }}
+                                </text>
+                                <ellipse ng-repeat-start="timePair in timeTable.timePairs"
+                                         ng-if="$first"
+                                         ng-attr-cx="{{ timePair.svg.x }}"
+                                         ng-attr-cy="{{ timePair.svg.y1 }}"
+                                         rx="10"
+                                         ry="10"
+                                         class="outer" />
+                                <ellipse ng-repeat-end
+                                         ng-attr-cx="{{ timePair.svg.x }}"
+                                         ng-attr-cy="{{ timePair.svg.y2 }}"
+                                         ng-attr-class="{{ ['outer', timePair.dailyWorkingTime].join(' ') }}"
+                                         rx="10"
+                                         ry="10"
+                                         class="outer" />
+                                <line ng-repeat-start="timePair in timeTable.timePairs"
+                                      ng-attr-x1="{{ timePair.svg.x }}"
+                                      ng-attr-y1="{{ timePair.svg.y1 + 4}}"
+                                      ng-attr-x2="{{ timePair.svg.x }}"
+                                      ng-attr-y2="{{ timePair.svg.y2 - 4 }}"
+                                      class="inner" />
+                                <ellipse ng-attr-cx="{{ timePair.svg.x }}"
+                                         ng-attr-cy="{{ timePair.svg.y1 }}"
+                                         rx="6"
+                                         ry="6"
+                                         class="inner" />
+                                <ellipse ng-repeat-end
+                                         ng-if="$last"
+                                         ng-attr-cx="{{ timePair.svg.x }}"
+                                         ng-attr-cy="{{ timePair.svg.y2 }}"
+                                         rx="6"
+                                         ry="6"
+                                         class="inner" />
+                            </svg>
+                        </md-content>
+                        <md-list class="list-tracking">
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3 translate="TYPE_WORKING"></h3>
+                                    <p>
+                                        {{ timeTable.timeWorking }} h
+                                    </p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3 translate="TYPE_ON_BREAK"></h3>
+                                    <p>
+                                        {{ timeTable.timeOnBreak }} h
+                                    </p>
+                                </div>
+                            </md-list-item>
+                        </md-list>
                     </md-tab-body>
                 </md-tab>
                 <md-tab id="tab-settings">
@@ -106,7 +225,7 @@
                             <md-list-item class="secondary-button-padding" ng-click="deleteAllBookings($event)">
                                 <p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
                                 <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ 'LABEL_ARIA_DELETE_ALL_BOOKINGS' | translate }}" ng-click="deleteAllBookings($event)">
-                                    <md-icon md-svg-icon="static/icons/delete_blk.svg" />
+                                    <md-icon md-svg-icon="static/icons/delete_gry.svg" />
                                 </md-button>
                             </md-list-item>
                             <md-subheader>
@@ -152,21 +271,21 @@
         </div>
         <md-fab-speed-dial class="new-booking-speeddial md-fling" md-open="newBookingSpeedDial.isOpen" ng-class="{ visible: selectedTab == 0 && views.main.visible }" md-direction="up">
             <md-fab-trigger>
-                <md-button class="md-fab md-primary" aria-label="Track Booking" bla-ng-click="trackBooking()" ng-click="newBookingSpeedDial.trigger($event)">
+                <md-button class="md-fab md-warn" aria-label="Track Booking" ng-click="newBookingSpeedDial.trigger($event)">
                     <md-icon md-svg-icon="static/icons/add.svg"></md-icon>
                 </md-button>
             </md-fab-trigger>
             <md-fab-actions>
-                <md-button class="md-fab md-warn md-raised md-mini" aria-label="Track Booking" ng-click="showManualBookingView($event)">
-                    <md-icon md-svg-icon="static/icons/close.svg"></md-icon>
+                <md-button class="md-fab md-raised md-mini" aria-label="Track Booking" ng-click="showManualBookingView($event)">
+                    <md-icon md-svg-icon="static/icons/add_details_gry.svg"></md-icon>
                 </md-button>
             </md-fab-actions>
         </md-fab-speed-dial>
         <form name="manualBookingForm" id="manual-booking-view" ng-submit="saveManualBooking($event)" layout="column" layout-fill ng-cloak ng-show="views.manualBooking.visible">
-            <md-toolbar class="site-content-toolbar md-accent">
+            <md-toolbar class="manual-booking-toolbar md-accent">
                 <div class="md-toolbar-tools">
                     <md-button class="md-icon-button" ng-click="hideManualBookingView($event)" ng-attr-aria-label="{{ 'CLOSE' | translate }}">
-                        <md-icon md-svg-icon="static/icons/close_blk.svg"></md-icon>
+                        <md-icon md-svg-icon="static/icons/close_gry.svg"></md-icon>
                     </md-button>
                     <span flex></span>
                     <md-button type="submit" class="md-button">
@@ -174,38 +293,55 @@
                     </md-button>
                 </div>
             </md-toolbar>
-            <md-input-container>
-                <label>{{ 'LABEL_BOOKING_DATE' | translate }}</label>
-                <md-datepicker name="dateField" ng-model="manualBooking.date" ng-required="true" md-current-view="month"></md-datepicker>
-                <div ng-messages="manualBookingForm.dateField.$error">
-                    <div ng-message="valid">{{ 'INVALID_DATE' | translate }}</div>
-                    <div ng-message="required">{{ 'REQUIRED_DATE' | translate }}</div>
-                </div>
-            </md-input-container>
-            <md-input-container>
-                <label>{{ 'LABEL_BOOKING_TIME' | translate }} ({{ 'FORMAT_TIME' | translate}})</label>
-                <input name="timeField" ng-model="manualBooking.time" type="time" required timevalid />
-                <div ng-messages="manualBookingForm.timeField.$error">
-                    <div ng-message="valid">{{ 'INVALID_TIME' | translate }}</div>
-                    <div ng-message="required">{{ 'REQUIRED_TIME' | translate }}</div>
-                </div>
-            </md-input-container>
-            <md-input-container>
-                <label>{{ 'LABEL_BOOKING_TYPE' | translate }}</label>
-                <md-select name="typeField" ng-model="manualBooking.type" required>
-                    <md-option ng-repeat="type in manualBooking.availableTypes" ng-value="type.value">{{ type.html }}</md-option>
-                </md-select>
-                <div ng-messages="manualBookingForm.typeField.$error">
-                    <div ng-message="valid">{{ 'INVALID_TYPE' | translate }}</div>
-                    <div ng-message="required">{{ 'REQUIRED_TYPE' | translate }}</div>
-                </div>
-            </md-input-container>
+            <md-content>
+                <md-input-container>
+                    <label>{{ 'LABEL_BOOKING_DATE' | translate }}</label>
+                    <md-datepicker name="dateField" ng-model="manualBooking.date" ng-required="true" md-current-view="month"></md-datepicker>
+                    <div ng-messages="manualBookingForm.dateField.$error">
+                        <div ng-message="valid">{{ 'INVALID_DATE' | translate }}</div>
+                        <div ng-message="required">{{ 'REQUIRED_DATE' | translate }}</div>
+                    </div>
+                </md-input-container>
+                <md-divider></md-divider>
+                <md-input-container class="my-input-container">
+                    <label>{{ 'LABEL_BOOKING_TIME' | translate }} ({{ 'FORMAT_TIME' | translate}})</label>
+                    <md-button class="md-icon-button" ng-click="manualBooking.focusTime=true">
+                        <md-icon md-svg-icon="static/icons/schedule_gry.svg" class="s48" aria-hidden="true"></md-icon>
+                    </md-button>
+                    <input name="timeField" ng-model="manualBooking.time" type="time" focus-me="manualBooking.focusTime" required timevalid />
+                    <div>
+                        <div class="md-errors-spacer"></div>
+                    </div>
+                    <div ng-messages="manualBookingForm.timeField.$error">
+                        <div ng-message="valid">{{ 'INVALID_TIME' | translate }}</div>
+                        <div ng-message="required">{{ 'REQUIRED_TIME' | translate }}</div>
+                    </div>
+                </md-input-container>
+                <md-divider></md-divider>
+                <md-input-container class="md-icon-float my-input-container">
+                    <label>{{ 'LABEL_BOOKING_TYPE' | translate }}</label>
+                    <md-button class="md-icon-button" ng-click="manualBooking.focusType=true">
+                        <md-icon md-svg-icon="static/icons/nature_gry.svg" aria-hidden="true"></md-icon>
+                    </md-button>
+                    <md-select name="typeField" ng-model="manualBooking.type" focus-me="manualBooking.focusType" required>
+                        <md-option ng-repeat="type in manualBooking.availableTypes" ng-value="type.value">{{ type.html }}</md-option>
+                    </md-select>
+                    <div>
+                        <div class="md-errors-spacer"></div>
+                    </div>
+                    <div ng-messages="manualBookingForm.typeField.$error">
+                        <div ng-message="valid">{{ 'INVALID_TYPE' | translate }}</div>
+                        <div ng-message="required">{{ 'REQUIRED_TYPE' | translate }}</div>
+                    </div>
+                </md-input-container>
+                <md-divider></md-divider>
+            </md-content>
         </form>
     </div>
-    
+
     <!-- Thank you Apple!!! -->
     <script type="text/javascript" src="static/js/lib/detect-idb.js"></script>
-    
+
     <!-- App Dependencies -->
     <script type="text/javascript" src="static/js/lib/moment-with-locales.min.js"></script>
     <!-- Angular Material requires Angular.js Libraries -->
@@ -214,16 +350,16 @@
     <script type="text/javascript" src="static/js/lib/angular-aria.min.js"></script>
     <script type="text/javascript" src="static/js/lib/angular-messages.min.js"></script>
     <script type="text/javascript" src="static/js/lib/angular-sanitize.js"></script>
-    
+
     <!-- Angular.js Locales -->
     <script type="text/javascript" src="static/js/lib/angular-locale_de-de.min.js"></script>
     <!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-i18n/1.5.7/angular-locale_en-us.js"></script> -->
-    
+
     <!-- Angular.js Addons -->
     <script type="text/javascript" src="static/js/lib/indexeddbshim.min.js"></script>
     <script type="text/javascript" src="static/js/lib/indexeddb.js"></script>
     <script type="text/javascript" src="static/js/lib/angular-translate.min.js"></script>
-    
+
     <!-- Angular Material Library -->
     <!-- <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc4/angular-material.min.js"></script> -->
     <script type="text/javascript" src="static/js/lib/angular-material.min.js"></script>
