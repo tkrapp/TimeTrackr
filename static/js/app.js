@@ -155,6 +155,13 @@ detectIDB(function (idb_capability) {
         DATABASE_IDB = 'IndexedDB',
         DATABASE_LS = 'LocalStorage',
         local_storage_version,
+        TYPE_WORKING = 'TYPE_WORKING',
+        TYPE_ON_BREAK = 'TYPE_ON_BREAK',
+        TYPE_AT_HOME = 'TYPE_AT_HOME',
+        BREAK_AFTER = 6 * 60 * 60 * 1000,
+        SECOND_BREAK_AFTER = 9 * 60 * 60 * 1000,
+        FIRST_BREAK = 30 * 60 * 1000,
+        SECOND_BREAK = 15 * 60 * 1000,
         database_backend = (function () {
             if (idb_capability === detectIDB.COMPATIBLE) {
                 return DATABASE_IDB;
@@ -593,13 +600,6 @@ detectIDB(function (idb_capability) {
             
             return today;
         };
-        
-        var TYPE_WORKING = 'TYPE_WORKING',
-            TYPE_ON_BREAK = 'TYPE_ON_BREAK',
-            BREAK_AFTER = 6 * 60 * 60 * 1000,
-            SECOND_BREAK_AFTER = 9 * 60 * 60 * 1000,
-            FIRST_BREAK = 30 * 60 * 1000,
-            SECOND_BREAK = 15 * 60 * 1000;
 
         function checkTimeSeriesValidity (timeseries) {
             var prev_bk_type = BOOKING_LEAVING,
@@ -854,9 +854,10 @@ detectIDB(function (idb_capability) {
                 timeseries = $scope.bookings.slice(0).filter(gteToday),
                 time_on_break = 0,
                 time_working = 0,
+                time_at_home = 0,
                 insertedDailyWorkingTime = false,
                 check_result, idx_pair, pair, pairs, prev_ts, ts, valid_ts,
-                time_diff, len_pairs, new_pair;
+                time_diff, len_pairs, new_pair, last_pair;
             
             timeseries.sort(sortBookingsAsc);
             check_result = checkTimeSeriesValidity(timeseries);
@@ -864,7 +865,17 @@ detectIDB(function (idb_capability) {
             
             if (valid_ts === true) {
                 pairs = calcTimes(timeseries);
+                last_pair = pairs[pairs.length - 1];
                 
+                // add pair for daily rest period
+                pairs.push({
+                    start: last_pair.end.clone(),
+                    end: last_pair.end.clone()
+                        .add(toMicroTime($scope.config.dailyRestPeriod)),
+                    type: TYPE_AT_HOME,
+                    synthetic: BOOKING_SYNTHETIC
+                });
+                console.log(pairs);
                 len_pairs = pairs.length;
                 for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
                     pair = pairs[idx_pair];
@@ -895,8 +906,10 @@ detectIDB(function (idb_capability) {
                         
                         time_diff = pair.end.diff(pair.start);
                         time_working += time_diff;
-                    } else {
+                    } else if (pair.type === TYPE_ON_BREAK) {
                         time_on_break += pair.end.diff(pair.start);
+                    } else {
+                        time_at_home += pair.end.diff(pair.start);
                     }
                     
                     pair.duration = getReadableDiff(pair.end - pair.start);
@@ -915,10 +928,13 @@ detectIDB(function (idb_capability) {
                         type_text_y: SVG_PADDING_V +
                             (idx_pair * SVG_LINE_HEIGHT) + SVG_TYPE_TEXT_V_OFFSET
                     };
+                    
+                    //console.log(pair);
                 }
                 
                 $scope.timeTable.timeWorking = getReadableDiff(time_working);
                 $scope.timeTable.timeOnBreak = getReadableDiff(time_on_break);
+                $scope.timeTable.timeAtHome = getReadableDiff(time_at_home);
                 $scope.timeTable.timePairs = pairs;
                 $scope.timeTable.error = error;
                 $scope.timeTable.svg.height = pair.svg.y2 + SVG_PADDING_V;
@@ -1088,6 +1104,9 @@ detectIDB(function (idb_capability) {
                     'TYPE_ON_BREAK': (
                         'On Break'
                     ),
+                    'TYPE_AT_HOME': (
+                        'Daily rest period'
+                    ),
                     'SUBHEADER_MISC_SETTINGS': (
                         'Miscellaneous'
                     ),
@@ -1236,6 +1255,9 @@ detectIDB(function (idb_capability) {
                     ),
                     'TYPE_ON_BREAK': (
                         'In Pause'
+                    ),
+                    'TYPE_AT_HOME': (
+                        'Tägl. Ruhezeit'
                     ),
                     'SUBHEADER_MISC_SETTINGS': (
                         'Sonstiges'

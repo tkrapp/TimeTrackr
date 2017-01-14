@@ -86,6 +86,10 @@
                                     line.outer.TYPE_ON_BREAK {
                                         stroke: #4caf50;
                                     }
+                                    
+                                    line.outer.TYPE_AT_HOME {
+                                        stroke: #cccccc;
+                                    }
 
                                     line.inner {
                                         stroke: rgba(0, 0, 0, 0.25);
@@ -186,6 +190,14 @@
                                     <h3 translate="TYPE_ON_BREAK"></h3>
                                     <p>
                                         {{ timeTable.timeOnBreak }} h
+                                    </p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
+                                    <h3 translate="TYPE_AT_HOME"></h3>
+                                    <p>
+                                        {{ timeTable.timeAtHome }} h
                                     </p>
                                 </div>
                             </md-list-item>
