@@ -142,6 +142,9 @@ detectIDB(function (idb_capability) {
     var MODULE_NAME = 'TimeTrackr',
         BOOKING_COMING = 'BOOKING_COMING',
         BOOKING_LEAVING = 'BOOKING_LEAVING',
+        BOOKING_SYNTHETIC = 'BOOKING_SYNTHETIC',
+        BOOKING_NON_SYNTHETIC = 'BOOKING_NON_SYNTHETIC',
+        BOOKING_DAILY_WORKING_TIME = 'BOOKING_DAILY_WORKING_TIME',
         IDB_NAME = 'TimeTrackrDB',
         IDX_BOOKING_TYPE = 'type_idx',
         IDX_BOOKING_TIMESTAMP = 'tstamp_idx',
@@ -589,13 +592,12 @@ detectIDB(function (idb_capability) {
             today.setMilliseconds(0);
             
             return today;
-        }
+        };
         
         var TYPE_WORKING = 'TYPE_WORKING',
             TYPE_ON_BREAK = 'TYPE_ON_BREAK',
             BREAK_AFTER = 6 * 60 * 60 * 1000,
             SECOND_BREAK_AFTER = 9 * 60 * 60 * 1000,
-            MAX_TIME = 10 * 60 * 60 * 1000,
             FIRST_BREAK = 30 * 60 * 1000,
             SECOND_BREAK = 15 * 60 * 1000;
 
@@ -605,7 +607,7 @@ detectIDB(function (idb_capability) {
             
             for (idx_bk = 0; idx_bk < timeseries.length; idx_bk += 1) {
                 bk = timeseries[idx_bk];
-                console.log(bk.type, prev_bk_type);
+                
                 if ((bk.type === BOOKING_COMING && prev_bk_type === BOOKING_COMING) ||
                     (bk.type === BOOKING_LEAVING && prev_bk_type === BOOKING_LEAVING)) {
                     return idx_bk;
@@ -624,6 +626,13 @@ detectIDB(function (idb_capability) {
             hours = parseInt(seconds / 3600);
             remainder = seconds % 3600;
             minutes = parseInt(remainder / 60);
+            
+            if (hours < 10) {
+                hours = '0' + hours;
+            }
+            if (minutes < 10) {
+                minutes = '0' + minutes;
+            }
 
             return hours + ':' + minutes;
         };
@@ -644,7 +653,11 @@ detectIDB(function (idb_capability) {
                     time_on_break < (FIRST_BREAK + SECOND_BREAK));
             }
         };
-
+        
+        function toMicroTime (hours) {
+            return hours * 60 * 60 * 1000;
+        }
+        
         function calcTimes (timeseries) {
             var pairs = [],
                 error, idx_bk, idx_p, pair, pair_start, pair_end, pause_start,
@@ -660,7 +673,7 @@ detectIDB(function (idb_capability) {
                         'start': timeseries[idx_bk - 1].timestamp,
                         'end': pair_start,
                         'type': TYPE_ON_BREAK,
-                        'synthetic': false
+                        'synthetic': BOOKING_NON_SYNTHETIC
                     });
                 }
 
@@ -668,7 +681,7 @@ detectIDB(function (idb_capability) {
                     'start': pair_start,
                     'end': pair_end,
                     'type': TYPE_WORKING,
-                    'synthetic': false
+                    'synthetic': BOOKING_NON_SYNTHETIC
                 });
             }
 
@@ -681,7 +694,7 @@ detectIDB(function (idb_capability) {
                 if (pair.end === null) {
                     if (time_working < BREAK_AFTER && time_on_break < FIRST_BREAK) {
                         pair.end = pair.start.clone().add(BREAK_AFTER - time_working);
-                        pair.synthetic = true;
+                        pair.synthetic = BOOKING_SYNTHETIC;
 
                         pause_start = pair.end.clone()
                         pause_end = pause_start.clone().add(FIRST_BREAK - time_on_break);
@@ -690,21 +703,21 @@ detectIDB(function (idb_capability) {
                             'start': pause_start,
                             'end': pause_end,
                             'type': TYPE_ON_BREAK,
-                            'synthetic': true,
+                            'synthetic': BOOKING_SYNTHETIC,
                         });
 
                         pairs.push({
                             'start': pause_end.clone(),
                             'end': null,
                             'type': TYPE_WORKING,
-                            'synthetic': true
+                            'synthetic': BOOKING_SYNTHETIC
                         });
                     } else if (time_working < SECOND_BREAK_AFTER &&
                         time_on_break < (FIRST_BREAK + SECOND_BREAK)) {
 
                         pair.end = pair.start.clone()
                             .add(SECOND_BREAK_AFTER - time_working);
-                        pair.synthetic = true;
+                        pair.synthetic = BOOKING_SYNTHETIC;
 
                         pause_start = pair.end.clone();
                         pause_end = pause_start.clone()
@@ -714,25 +727,28 @@ detectIDB(function (idb_capability) {
                             'start': pause_start,
                             'end': pause_end,
                             'type': TYPE_ON_BREAK,
-                            'synthetic': true
+                            'synthetic': BOOKING_SYNTHETIC
                         });
 
                         pairs.push({
                             'start': pause_end.clone(),
                             'end': null,
                             'type': TYPE_WORKING,
-                            'synthetic': true
+                            'synthetic': BOOKING_SYNTHETIC
                         });
-                    } else if (time_working < MAX_TIME) {
-                        pair.end = pair.start.clone().add(MAX_TIME - time_working);
-                        pair.synthetic = true;
+                    } else if (time_working <
+                            toMicroTime($scope.config.maxDailyWorkingTime)) {
+                        pair.end = pair.start.clone()
+                            .add(toMicroTime($scope.config.maxDailyWorkingTime) -
+                                 time_working);
+                        pair.synthetic = BOOKING_SYNTHETIC;
                     } else {
                         pair.end = pair.start.clone();
                     }
                 }
-
+                
                 if (sixHoursCheck(pair)) {
-                    pair.synthetic = true;
+                    pair.synthetic = BOOKING_SYNTHETIC;
                     pair_end = pair.end.clone();
                     pair.end = pair.start.clone().add(BREAK_AFTER);
 
@@ -742,8 +758,7 @@ detectIDB(function (idb_capability) {
                             'start': pair.start.clone().add(BREAK_AFTER),
                             'end': pair.start.clone().add(BREAK_AFTER).add(duration_break),
                             'type': TYPE_ON_BREAK,
-                            'synthetic': true,
-                            'hula': 'NO'
+                            'synthetic': BOOKING_SYNTHETIC
                         };
 
                     if (new_pair.end >= pair_end) {
@@ -761,7 +776,7 @@ detectIDB(function (idb_capability) {
                                 'start': new_pair.end.clone(),
                                 'end': pair_end,
                                 'type': TYPE_WORKING,
-                                'synthetic': true
+                                'synthetic': BOOKING_SYNTHETIC
                             }
                         );
                     }
@@ -772,11 +787,11 @@ detectIDB(function (idb_capability) {
                             'end': pair.start.clone()
                                 .add(SECOND_BREAK_AFTER - time_working).add(SECOND_BREAK),
                             'type': TYPE_ON_BREAK,
-                            'synthetic': true
+                            'synthetic': BOOKING_SYNTHETIC
                         },
                         pair_end = pair.end.clone();
 
-                    pair.synthetic = true;
+                    pair.synthetic = BOOKING_SYNTHETIC;
                     pair.end = new_pair.start.clone();
 
                     if (new_pair.end >= pair_end) {
@@ -788,7 +803,7 @@ detectIDB(function (idb_capability) {
                                 'start': new_pair.end.clone(),
                                 'end': pair_end,
                                 'type': TYPE_WORKING,
-                                'synthetic': true
+                                'synthetic': BOOKING_SYNTHETIC
                             };
 
                         pairs.splice(
@@ -806,14 +821,7 @@ detectIDB(function (idb_capability) {
                     time_on_break += (pair.end - pair.start);
                 }
             }
-
-            console.log('PAIRS');
-            for (idx_p = 0; idx_p < pairs.length; idx_p += 1) {
-                pair = pairs[idx_p];
-                console.log(pair.start.toString(), pair.end.toString(),
-                    pair.type, pair.synthetic, pair.hula);
-            }
-
+            
             return pairs;
         };
         
@@ -829,53 +837,102 @@ detectIDB(function (idb_capability) {
             timePairs: [],
             timeWorking: 0,
             timeOnBreak: 0,
-            error: false
+            error: false,
+            svg: {
+                height: 0
+            }
         };
         
-        
+        var SVG_LINE_HEIGHT = 80,
+            SVG_PADDING_V = 10,
+            SVG_PADDING_H = 30,
+            SVG_TEXT_V_OFFSET = 5,
+            SVG_TYPE_TEXT_V_OFFSET = SVG_LINE_HEIGHT / 2 + 5,
+            SVG_TEXT_L = 30;
         $scope.updateTimeTable = function () {
             var error = false,
                 timeseries = $scope.bookings.slice(0).filter(gteToday),
                 time_on_break = 0,
                 time_working = 0,
-                check_result, idx_pair, pair, pairs, prev_ts, ts, valid_ts;
+                insertedDailyWorkingTime = false,
+                check_result, idx_pair, pair, pairs, prev_ts, ts, valid_ts,
+                time_diff, len_pairs, new_pair;
             
             timeseries.sort(sortBookingsAsc);
             check_result = checkTimeSeriesValidity(timeseries);
             valid_ts = check_result === -1;
-            console.log(timeseries, check_result);
-
+            
             if (valid_ts === true) {
                 pairs = calcTimes(timeseries);
-
-                for (idx_pair = 0; idx_pair < pairs.length; idx_pair += 1) {
+                
+                len_pairs = pairs.length;
+                for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
                     pair = pairs[idx_pair];
-
+                    time_diff = pair.end.diff(pair.start);
+                    
                     if (pair.type === TYPE_WORKING) {
-                        time_working += pair.end.diff(pair.start);
+                        if (insertedDailyWorkingTime === false &&
+                            (time_working + time_diff) >
+                                toMicroTime($scope.config.dailyWorkingTime)) {
+                            insertedDailyWorkingTime = true;
+                            len_pairs += 1;
+                            
+                            new_pair = {
+                                'start': pair.start.clone(),
+                                'end': pair.start.clone()
+                                    .add(toMicroTime($scope.config.dailyWorkingTime) -
+                                         time_working),
+                                'type': TYPE_WORKING,
+                                'synthetic': BOOKING_SYNTHETIC,
+                                'dailyWorkingTime': BOOKING_DAILY_WORKING_TIME
+                            };
+                            
+                            pair.start = new_pair.end.clone();
+                            pairs.splice(idx_pair, 0, new_pair);
+                            
+                            pair = new_pair;
+                        }
+                        
+                        time_diff = pair.end.diff(pair.start);
+                        time_working += time_diff;
                     } else {
                         time_on_break += pair.end.diff(pair.start);
                     }
+                    
+                    pair.duration = getReadableDiff(pair.end - pair.start);
+                    pair.svg = {
+                        x: SVG_PADDING_H,
+                        y1: SVG_PADDING_V +
+                            (idx_pair * SVG_LINE_HEIGHT),
+                        y2: SVG_PADDING_V +
+                            ((idx_pair + 1) * SVG_LINE_HEIGHT),
+                        point_text_x: SVG_PADDING_H + SVG_TEXT_L,
+                        point_text_y1: SVG_PADDING_V +
+                            (idx_pair * SVG_LINE_HEIGHT) + SVG_TEXT_V_OFFSET,
+                        point_text_y2: SVG_PADDING_V +
+                            ((idx_pair + 1) * SVG_LINE_HEIGHT) + SVG_TEXT_V_OFFSET,
+                        type_text_x: SVG_PADDING_H + SVG_TEXT_L,
+                        type_text_y: SVG_PADDING_V +
+                            (idx_pair * SVG_LINE_HEIGHT) + SVG_TYPE_TEXT_V_OFFSET
+                    };
                 }
-
-                console.log('working', getReadableDiff(time_working));
-                console.log('break', getReadableDiff(time_on_break));
-
-                $scope.timeTable.timeWorking = time_working;
-                $scope.timeTable.timeOnBreak = time_on_break;
+                
+                $scope.timeTable.timeWorking = getReadableDiff(time_working);
+                $scope.timeTable.timeOnBreak = getReadableDiff(time_on_break);
                 $scope.timeTable.timePairs = pairs;
                 $scope.timeTable.error = error;
+                $scope.timeTable.svg.height = pair.svg.y2 + SVG_PADDING_V;
             } else {
                 prev_ts = timeseries[check_result - 1];
                 ts = timeseries[check_result];
-
+                
                 if (prev_ts) {
                     error = 'Invalid timeseries. Check positions ' +
                         (check_result - 1) + ' and ' + check_result;
                 } else {
                     error = 'Invalid timeseries. Check first element.';
                 }
-
+                
                 $scope.timeTable.timeWorking = 0;
                 $scope.timeTable.timeOnBreak = 0;
                 $scope.timeTable.timePairs = [];
@@ -946,6 +1003,15 @@ detectIDB(function (idb_capability) {
                     ),
                     'BOOKING_LEAVING': (
                         'leaving'
+                    ),
+                    'BOOKING_SYNTHETIC': (
+                        'fictional'
+                    ),
+                    'BOOKING_NON_SYNTHETIC': (
+                        'actual'
+                    ),
+                    'BOOKING_DAILY_WORKING_TIME': (
+                        'reached daily working time'
                     ),
                     'OCLOCK': (
                         'o\'clock'
@@ -1086,6 +1152,15 @@ detectIDB(function (idb_capability) {
                     ),
                     'BOOKING_LEAVING': (
                         'gehen'
+                    ),
+                    'BOOKING_SYNTHETIC': (
+                        'imaginär'
+                    ),
+                    'BOOKING_NON_SYNTHETIC': (
+                        'tatsächlich'
+                    ),
+                    'BOOKING_DAILY_WORKING_TIME': (
+                        'tägliche Arbeitszeit erreicht'
                     ),
                     'OCLOCK': (
                         'Uhr'
