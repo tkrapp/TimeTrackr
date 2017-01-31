@@ -145,6 +145,7 @@ detectIDB(function (idb_capability) {
         BOOKING_SYNTHETIC = 'BOOKING_SYNTHETIC',
         BOOKING_NON_SYNTHETIC = 'BOOKING_NON_SYNTHETIC',
         BOOKING_DAILY_WORKING_TIME = 'BOOKING_DAILY_WORKING_TIME',
+        BOOKING_MAX_DAILY_WORKING_TIME = 'BOOKING_MAX_DAILY_WORKING_TIME',
         IDB_NAME = 'TimeTrackrDB',
         IDX_BOOKING_TYPE = 'type_idx',
         IDX_BOOKING_TIMESTAMP = 'tstamp_idx',
@@ -162,6 +163,12 @@ detectIDB(function (idb_capability) {
         SECOND_BREAK_AFTER = 9 * 60 * 60 * 1000,
         FIRST_BREAK = 30 * 60 * 1000,
         SECOND_BREAK = 15 * 60 * 1000,
+        SVG_LINE_HEIGHT = 80,
+        SVG_PADDING_V = 30,
+        SVG_PADDING_H = 30,
+        SVG_TEXT_V_OFFSET = 5,
+        SVG_TYPE_TEXT_V_OFFSET = SVG_LINE_HEIGHT / 2 + 5,
+        SVG_TEXT_L = 30,
         database_backend = (function () {
             if (idb_capability === detectIDB.COMPATIBLE) {
                 return DATABASE_IDB;
@@ -207,7 +214,7 @@ detectIDB(function (idb_capability) {
             manualBooking: {
                 visible: false
             }
-        }
+        };
         
         $scope.showView = function (view_name) {
             var view_names = Object.keys($scope.views),
@@ -231,6 +238,7 @@ detectIDB(function (idb_capability) {
         };
         
         $scope.bookings = [];
+        $scope.selectedBookings = [];
         $scope.databaseEngine = 'IndexedDB';
         if (storage instanceof window.LocalStorage) {
             $scope.databaseEngine = 'LocalStorage';
@@ -239,7 +247,8 @@ detectIDB(function (idb_capability) {
         $scope.config = {
             dailyWorkingTime: 7.6,
             maxDailyWorkingTime: 10,
-            dailyRestPeriod: 11
+            dailyRestPeriod: 11,
+            pointsInTime: {},
         };
         
         function saveConfig() {
@@ -351,33 +360,208 @@ detectIDB(function (idb_capability) {
             });
         };
         
+        $scope.showPointInTimeDialog = function(ev) {
+            $mdDialog.show({
+                locals: {
+                    inputData: {
+                        type: 'after',
+                        value: undefined,
+                        index: undefined,
+                        title: undefined,
+                    }
+                },
+                controller: PointInTimeController,
+                templateUrl: 'point_in_time_dialog.tmpl.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose:true,
+                fullscreen: true
+            })
+            .then(function(answer) {
+                function filterNotUndefined (value) {
+                    return value !== undefined;
+                };
+                
+                var pointsInTime = $scope.config.pointsInTime,
+                    pointInTime,
+                    idx;
+                
+                if (answer.title === undefined || answer.type === undefined ||
+                    answer.value === undefined) {
+                    return;
+                } else if (pointsInTime[answer.title] !== undefined) {
+                    $translate([
+                        'DIALOG_TITLE_CONFIRM_OVERWRITE_POINT_IN_TIME',
+                        'DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME',
+                        'DIALOG_CONFIRM_OVERWRITE_POINT_IN_TIME',
+                        'DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME'
+                    ]).then(function (translations) {
+                        var confirmOverwrite = $mdDialog.confirm();
+
+                        confirmOverwrite
+                            .title(translations.DIALOG_TITLE_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                            .textContent(translations.DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                            .ariaLabel(translations.DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                            .ok(translations.DIALOG_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                            .cancel(translations.DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME);
+                        
+                        $mdDialog.show(confirmOverwrite).then(function (result) {
+                            pointsInTime[answer.title] = answer;
+                        });
+                    });
+                    
+                    return;
+                }
+                
+                pointsInTime[answer.title] = answer;
+            });
+        };
+        
+        $scope.deletePointInTime = function (pointInTime) {
+            $translate([
+                'OK', 'CANCEL', 'DIALOG_TITLE_DELETE_POINT_IN_TIME',
+                'DIALOG_CONTENT_DELETE_POINT_IN_TIME'
+            ]).then(function (translations) {
+                var confirmDeletion = $mdDialog.confirm();
+                
+                confirmDeletion
+                    .title(translations.DIALOG_TITLE_DELETE_POINT_IN_TIME)
+                    .textContent(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
+                    .ariaLabel(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
+                    .ok(translations.OK)
+                    .cancel(translations.CANCEL);
+                
+                $mdDialog.show(confirmDeletion).then(function (result) {
+                    delete $scope.config.pointsInTime[pointInTime.title];
+                });
+            });
+        };
+        
+        function PointInTimeController($scope, $mdDialog, inputData) {
+            $scope.hide = function () {
+                $mdDialog.hide();
+            };
+            
+            $scope.cancel = function () {
+                $mdDialog.cancel();
+            };
+            
+            $scope.answer = function () {
+                var value;
+                
+                switch ($scope.type) {
+                    case $scope.valueAfter:
+                        value = $scope.hours;
+                        break;
+                    
+                    default:
+                        value = $scope.timestamp;
+                }
+                
+                $mdDialog.hide({
+                    type: $scope.type,
+                    value: value,
+                    title: $scope.title
+                });
+            }
+            
+            $scope.valueAfter = 'after';
+            $scope.valueAt = 'at';
+            $scope.availableTypes = [
+                {
+                    value: $scope.valueAfter,
+                    text: 'OPTION_AFTER'
+                },
+                {
+                    value: $scope.valueAt,
+                    text: 'OPTION_AT'
+                }
+            ];
+            $scope.type = inputData.type || $scope.availableTypes[0].value;
+            $scope.title = inputData.title || '';
+            $scope.hours = undefined;
+            $scope.timestamp = undefined;
+        }
+        
+        function enhanceBooking(booking) {
+            booking.timestamp = moment.unix(booking.timestamp);
+            booking.selected = false;
+            
+            return booking;
+        }
+        
         function updateBookings() {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 store.getAll().then(function (result) {
-                    var idx;
-                    
-                    result.sort(sort_by_timestamp_desc);
-                    
-                    for (idx = 0; idx < result.length; idx += 1) {
-                        result[idx].timestamp = moment.unix(result[idx].timestamp);
-                    }
-                    
-                    $scope.bookings = result;
+                    $scope.bookings = result
+                        .sort(sort_by_timestamp_desc)
+                        .map(enhanceBooking);
                     
                     // Force ui to update
                     $scope.$applyAsync();
                 });
             });
+        }
+        
+        function isSelectedBooking(booking) {
+            return booking.selected;
+        }
+        
+        function isNotSelectedBooking(booking) {
+            return booking.selected === false;
+        }
+        
+        $scope.updateSelectedBookings = function () {
+            $scope.selectedBookings = $scope.bookings.filter(isSelectedBooking);
         };
+        $scope.$watch('bookings', $scope.updateSelectedBookings);
+        
+        $scope.deleteSelectedBookings = function (selectedBookings) {
+            function doDeleteBookings(response) {
+                if (response === undefined) {
+                    storage.openStore(OBJECT_STORE_NAME, function (store) {
+                        var idx;
+                        
+                        for (idx = 0; idx < selectedBookings.length; idx += 1) {
+                            store.delete(selectedBookings[idx].timestamp.unix());
+                        }
+                    });
+                } else { // UNDO pressed
+                    updateBookings();
+                }
+            }
+            
+            storage.openStore(OBJECT_STORE_NAME, function (store) {
+                $translate([
+                    'TOAST_DELETE_MANY', 'UNDO'
+                ]).then(function (translations) {
+                    var toast = $mdToast.simple(),
+                        idx;
 
+                    toast
+                        .textContent(translations.TOAST_DELETE_MANY)
+                        .action(translations.UNDO)
+                        .highlightAction(true)
+                        .highlightClass('md-primary')
+                        .hideDelay(TOAST_DELAY);
+                    
+                    $scope.bookings = $scope.bookings.filter(isNotSelectedBooking);
+                    
+                    $mdToast
+                        .show(toast)
+                        .then(doDeleteBookings)
+                        .catch(doDeleteBookings);
+                });
+            });
+        };
+        
         $scope.trackBooking = function () {
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 var type =  null,
                     timestamp = moment(new Date()).seconds(0);
                 
                 if ($scope.bookings.length === 0 ||
-                    $scope.bookings[0].type === BOOKING_LEAVING
-                ) {
+                        $scope.bookings[0].type === BOOKING_LEAVING) {
                     type = BOOKING_COMING;
                 } else {
                     type = BOOKING_LEAVING;
@@ -393,6 +577,16 @@ detectIDB(function (idb_capability) {
         };
         
         $scope.deleteBooking = function (booking) {
+            function doDeleteBooking(response) {
+                if (response === undefined) {
+                    storage.openStore(OBJECT_STORE_NAME, function (store) {
+                        store.delete(booking.timestamp.unix());
+                    });
+                } else { // UNDO pressed
+                    updateBookings();
+                }
+            }
+            
             $translate([
                 'TOAST_DELETE_SINGLE', 'UNDO'
             ]).then(function (translations) {
@@ -411,16 +605,8 @@ detectIDB(function (idb_capability) {
 
                     $mdToast
                         .show(toast)
-                        .then(function (response) {
-                            // UNDO pressed
-                            if (response === undefined) {
-                                storage.openStore(OBJECT_STORE_NAME, function (store) {
-                                    store.delete(booking.timestamp.unix());
-                                });
-                            } else {
-                                updateBookings();
-                            }
-                        });
+                        .then(doDeleteBooking)
+                        .catch(doDeleteBooking);
                 }
             });
         };
@@ -429,54 +615,69 @@ detectIDB(function (idb_capability) {
             $translate([
                 'TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL',
                 'DIALOG_CONTENT_DELETE_ALL', 'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS',
-                'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO']
-            ).then(function (translations) {
-                var confirm = $mdDialog.confirm();
+                'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO'])
+                .then(function (translations) {
+                    var confirm = $mdDialog.confirm();
 
-                confirm
-                    .title(translations.DIALOG_TITLE_DELETE_ALL)
-                    .textContent(translations.DIALOG_CONTENT_DELETE_ALL)
-                    .ariaLabel(translations.DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS)
-                    .targetEvent(evt)
-                    .ok(translations.DIALOG_CONFIRM_DELETE_ALL)
-                    .cancel(translations.DIALOG_CANCEL_DELETE_ALL);
+                    confirm
+                        .title(translations.DIALOG_TITLE_DELETE_ALL)
+                        .textContent(translations.DIALOG_CONTENT_DELETE_ALL)
+                        .ariaLabel(translations.DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS)
+                        .targetEvent(evt)
+                        .ok(translations.DIALOG_CONFIRM_DELETE_ALL)
+                        .cancel(translations.DIALOG_CANCEL_DELETE_ALL);
 
-                $mdDialog
-                    .show(confirm)
-                    .then(function () {
-                        var toast = $mdToast.simple();
+                    $mdDialog
+                        .show(confirm)
+                        .then(function () {
+                            var toast = $mdToast.simple();
 
-                        // just visually remove the bookings
-                        $scope.bookings = [];
+                            // just visually remove the bookings
+                            $scope.bookings = [];
 
-                        toast
-                            .textContent(translations.TOAST_DELETE_ALL)
-                            .action(translations.UNDO)
-                            .highlightAction(true)
-                            .highlightClass('md-primary')
-                            .hideDelay(TOAST_DELAY);
+                            toast
+                                .textContent(translations.TOAST_DELETE_ALL)
+                                .action(translations.UNDO)
+                                .highlightAction(true)
+                                .highlightClass('md-primary')
+                                .hideDelay(TOAST_DELAY);
 
-                        $mdToast
-                            .show(toast)
-                            .then(function (response) {
-                                if (response === undefined) {
-                                    // really remove the bookings from indexeddb
-                                    storage.openStore(OBJECT_STORE_NAME, function (store) {
-                                        store
-                                            .clear()
-                                            .then(updateBookings);
-                                    });
-                                } else {
-                                    updateBookings();
-                                }
-                            });
-                    });
-            });
+                            $mdToast
+                                .show(toast)
+                                .then(function (response) {
+                                    if (response === undefined) {
+                                        // really remove the bookings from indexeddb
+                                        storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                            store
+                                                .clear()
+                                                .then(updateBookings);
+                                        });
+                                    } else {
+                                        updateBookings();
+                                    }
+                                });
+                        });
+                });
         };
-
+        
+        function getToday() {
+            var today = new Date();
+            
+            today.setHours(0);
+            today.setMinutes(0);
+            today.setSeconds(0);
+            today.setMilliseconds(0);
+            
+            return today;
+        }
+        
         $scope.showManualBookingView = function (evt, booking) {
             var manualBooking = $scope.manualBooking,
-                date, time, type, is_new, old_key;
+                date,
+                time,
+                type,
+                is_new,
+                old_key;
             
             if (booking) {
                 date = booking.timestamp.toDate();
@@ -522,7 +723,7 @@ detectIDB(function (idb_capability) {
                 $scope.hideManualBookingView();
                 
                 if (manualBooking.oldBooking) {
-                    old_timestamp = manualBooking.oldBooking.timestamp,
+                    old_timestamp = manualBooking.oldBooking.timestamp;
                     old_type = manualBooking.oldBooking.type;
                     
                     manualBooking.oldBooking.timestamp = timestamp;
@@ -562,7 +763,7 @@ detectIDB(function (idb_capability) {
                                 'timestamp': timestamp.unix()
                             })
                             .then(updateBookings);
-                    })
+                    });
                 }
             });
         };
@@ -586,30 +787,20 @@ detectIDB(function (idb_capability) {
                             html: translations.BOOKING_LEAVING
                         }
                     ],
-                    oldBooking: null,
+                    oldBooking: null
                 };
             });
         
-        function getToday () {
-            var today = new Date();
-            
-            today.setHours(0);
-            today.setMinutes(0);
-            today.setSeconds(0);
-            today.setMilliseconds(0);
-            
-            return today;
-        };
-
-        function checkTimeSeriesValidity (timeseries) {
+        function checkTimeSeriesValidity(timeseries) {
             var prev_bk_type = BOOKING_LEAVING,
-                idx_bk, bk;
+                idx_bk,
+                bk;
             
             for (idx_bk = 0; idx_bk < timeseries.length; idx_bk += 1) {
                 bk = timeseries[idx_bk];
                 
                 if ((bk.type === BOOKING_COMING && prev_bk_type === BOOKING_COMING) ||
-                    (bk.type === BOOKING_LEAVING && prev_bk_type === BOOKING_LEAVING)) {
+                        (bk.type === BOOKING_LEAVING && prev_bk_type === BOOKING_LEAVING)) {
                     return idx_bk;
                 }
 
@@ -617,15 +808,22 @@ detectIDB(function (idb_capability) {
             }
 
             return -1;
-        };
+        }
 
-        function getReadableDiff (milliseconds) {
+        function getReadableDiff(milliseconds) {
             var seconds = milliseconds / 1000,
-                hours, minutes, remainder;
-
-            hours = parseInt(seconds / 3600);
+                negativeValue= milliseconds < 0,
+                hours,
+                minutes,
+                remainder;
+            
+            if (negativeValue) {
+                seconds = Math.abs(seconds);
+            }
+            
+            hours = parseInt(seconds / 3600, 10);
             remainder = seconds % 3600;
-            minutes = parseInt(remainder / 60);
+            minutes = parseInt(remainder / 60, 10);
             
             if (hours < 10) {
                 hours = '0' + hours;
@@ -634,39 +832,50 @@ detectIDB(function (idb_capability) {
                 minutes = '0' + minutes;
             }
 
-            return hours + ':' + minutes;
-        };
+            return (negativeValue ? '-' : '') + hours + ':' + minutes;
+        }
 
-        function sixHoursCheck (pair) {
-            if (pair.type == TYPE_ON_BREAK) {
+        function sixHoursCheck(pair) {
+            if (pair.type === TYPE_ON_BREAK) {
                 return false;
             } else {
                 return (pair.end - pair.start) >= BREAK_AFTER;
             }
-        };
+        }
 
-        function nineHoursCheck (pair, time_working, time_on_break) {
-            if (pair.type == TYPE_ON_BREAK) {
+        function nineHoursCheck(pair, time_working, time_on_break) {
+            if (pair.type === TYPE_ON_BREAK) {
                 return false;
             } else {
                 return (time_working + (pair.end - pair.start) > SECOND_BREAK_AFTER &&
                     time_on_break < (FIRST_BREAK + SECOND_BREAK));
             }
-        };
+        }
         
-        function toMicroTime (hours) {
+        function toMicroTime(hours) {
             return hours * 60 * 60 * 1000;
         }
         
-        function calcTimes (timeseries) {
+        function calcTimes(timeseries) {
             var pairs = [],
-                error, idx_bk, idx_p, pair, pair_start, pair_end, pause_start,
-                pause_end;
+                time_on_break = 0,
+                time_working = 0,
+                error,
+                idx_bk,
+                idx_p,
+                pair,
+                pair_start,
+                pair_end,
+                pause_start,
+                pause_end,
+                duration_break,
+                new_pair,
+                new_new_pair;
 
             for (idx_bk = 0; idx_bk < timeseries.length; idx_bk += 2) {
                 pair_start = timeseries[idx_bk].timestamp;
                 pair_end = timeseries[idx_bk + 1] ?
-                    timeseries[idx_bk + 1].timestamp : null;
+                        timeseries[idx_bk + 1].timestamp : null;
 
                 if (idx_bk > 0) {
                     pairs.push({
@@ -685,9 +894,6 @@ detectIDB(function (idb_capability) {
                 });
             }
 
-            var time_on_break = 0,
-                time_working = 0;
-
             for (idx_p = 0; idx_p < pairs.length; idx_p += 1) {
                 pair = pairs[idx_p];
 
@@ -696,14 +902,14 @@ detectIDB(function (idb_capability) {
                         pair.end = pair.start.clone().add(BREAK_AFTER - time_working);
                         pair.synthetic = BOOKING_SYNTHETIC;
 
-                        pause_start = pair.end.clone()
+                        pause_start = pair.end.clone();
                         pause_end = pause_start.clone().add(FIRST_BREAK - time_on_break);
 
                         pairs.push({
                             'start': pause_start,
                             'end': pause_end,
                             'type': TYPE_ON_BREAK,
-                            'synthetic': BOOKING_SYNTHETIC,
+                            'synthetic': BOOKING_SYNTHETIC
                         });
 
                         pairs.push({
@@ -713,7 +919,7 @@ detectIDB(function (idb_capability) {
                             'synthetic': BOOKING_SYNTHETIC
                         });
                     } else if (time_working < SECOND_BREAK_AFTER &&
-                        time_on_break < (FIRST_BREAK + SECOND_BREAK)) {
+                            time_on_break < (FIRST_BREAK + SECOND_BREAK)) {
 
                         pair.end = pair.start.clone()
                             .add(SECOND_BREAK_AFTER - time_working);
@@ -752,14 +958,14 @@ detectIDB(function (idb_capability) {
                     pair_end = pair.end.clone();
                     pair.end = pair.start.clone().add(BREAK_AFTER);
 
-                    var duration_break = (time_on_break < FIRST_BREAK ?
-                            FIRST_BREAK - time_on_break : SECOND_BREAK),
-                        new_pair = {
-                            'start': pair.start.clone().add(BREAK_AFTER),
-                            'end': pair.start.clone().add(BREAK_AFTER).add(duration_break),
-                            'type': TYPE_ON_BREAK,
-                            'synthetic': BOOKING_SYNTHETIC
-                        };
+                    duration_break = (time_on_break < FIRST_BREAK ?
+                            FIRST_BREAK - time_on_break : SECOND_BREAK);
+                    new_pair = {
+                        'start': pair.start.clone().add(BREAK_AFTER),
+                        'end': pair.start.clone().add(BREAK_AFTER).add(duration_break),
+                        'type': TYPE_ON_BREAK,
+                        'synthetic': BOOKING_SYNTHETIC
+                    };
 
                     if (new_pair.end >= pair_end) {
                         new_pair.end = pair_end;
@@ -781,15 +987,15 @@ detectIDB(function (idb_capability) {
                         );
                     }
                 } else if (nineHoursCheck(pair, time_working, time_on_break)) {
-                    var new_pair = {
-                            'start': pair.start.clone()
-                                .add(SECOND_BREAK_AFTER - time_working),
-                            'end': pair.start.clone()
-                                .add(SECOND_BREAK_AFTER - time_working).add(SECOND_BREAK),
-                            'type': TYPE_ON_BREAK,
-                            'synthetic': BOOKING_SYNTHETIC
-                        },
-                        pair_end = pair.end.clone();
+                    new_pair = {
+                        'start': pair.start.clone()
+                            .add(SECOND_BREAK_AFTER - time_working),
+                        'end': pair.start.clone()
+                            .add(SECOND_BREAK_AFTER - time_working).add(SECOND_BREAK),
+                        'type': TYPE_ON_BREAK,
+                        'synthetic': BOOKING_SYNTHETIC
+                    };
+                    pair_end = pair.end.clone();
 
                     pair.synthetic = BOOKING_SYNTHETIC;
                     pair.end = new_pair.start.clone();
@@ -799,12 +1005,12 @@ detectIDB(function (idb_capability) {
 
                         pairs.splice(idx_p + 1, 0, new_pair);
                     } else if (new_pair.end < pair_end) {
-                        var new_new_pair = {
-                                'start': new_pair.end.clone(),
-                                'end': pair_end,
-                                'type': TYPE_WORKING,
-                                'synthetic': BOOKING_SYNTHETIC
-                            };
+                        new_new_pair = {
+                            'start': new_pair.end.clone(),
+                            'end': pair_end,
+                            'type': TYPE_WORKING,
+                            'synthetic': BOOKING_SYNTHETIC
+                        };
 
                         pairs.splice(
                             idx_p + 1,
@@ -823,13 +1029,13 @@ detectIDB(function (idb_capability) {
             }
             
             return pairs;
-        };
+        }
         
-        function sortBookingsAsc (booking_a, booking_b) {
+        function sortBookingsAsc(booking_a, booking_b) {
             return booking_a.timestamp - booking_b.timestamp;
-        };
+        }
         
-        function gteToday (booking) {
+        function gteToday(booking) {
             return moment(0, 'HH') <= booking.timestamp;
         }
         
@@ -837,27 +1043,104 @@ detectIDB(function (idb_capability) {
             timePairs: [],
             timeWorking: 0,
             timeOnBreak: 0,
+            overtime: 0,
             error: false,
             svg: {
                 height: 0
             }
         };
         
-        var SVG_LINE_HEIGHT = 80,
-            SVG_PADDING_V = 10,
-            SVG_PADDING_H = 30,
-            SVG_TEXT_V_OFFSET = 5,
-            SVG_TYPE_TEXT_V_OFFSET = SVG_LINE_HEIGHT / 2 + 5,
-            SVG_TEXT_L = 30;
+        function sortByValue (pointInTimeA, pointInTimeB) {
+            return pointInTimeA.value - pointInTimeB.value;
+        }
+        
+        function getPointsAfter () {
+            var pointsInTime = $scope.config.pointsInTime,
+                keys = Object.keys(pointsInTime),
+                pointsAfter = [
+                    {
+                        value: toMicroTime($scope.config.dailyWorkingTime),
+                        title: BOOKING_DAILY_WORKING_TIME,
+                        class: 'daily-working-time'
+                    },
+                    {
+                        value: toMicroTime($scope.config.maxDailyWorkingTime),
+                        title: BOOKING_MAX_DAILY_WORKING_TIME,
+                        class: 'alert'
+                    }
+                ],
+                idx,
+                pointInTime;
+            
+            for (idx = 0; idx < keys.length; idx += 1) {
+                pointInTime = pointsInTime[keys[idx]];
+                
+                if (pointInTime.type !== 'after') {
+                    continue;
+                }
+                
+                pointsAfter.push({
+                    value: toMicroTime(pointInTime.value),
+                    title: pointInTime.title
+                });
+            }
+            
+            pointsAfter.sort(sortByValue);
+            
+            return pointsAfter;
+        }
+        
+        function getPointsAt () {
+            var pointsInTime = $scope.config.pointsInTime,
+                keys = Object.keys(pointsInTime),
+                pointsAt = [],
+                idx,
+                pointInTime;
+            
+            for (idx = 0; idx < keys.length; idx += 1) {
+                pointInTime = pointsInTime[keys[idx]];
+                
+                if (pointInTime.type !== 'at') {
+                    continue;
+                }
+                
+                pointsAt.push({
+                    value: moment(pointInTime.value),
+                    title: pointInTime.title
+                });
+            }
+            
+            pointsAt.sort(sortByValue);
+            
+            return pointsAt;
+        }
+        
         $scope.updateTimeTable = function () {
             var error = false,
                 timeseries = $scope.bookings.slice(0).filter(gteToday),
                 time_on_break = 0,
                 time_working = 0,
                 time_at_home = 0,
-                insertedDailyWorkingTime = false,
-                check_result, idx_pair, pair, pairs, prev_ts, ts, valid_ts,
-                time_diff, len_pairs, new_pair, last_pair;
+                pointsAfter = getPointsAfter(),
+                pointAfterIdx = 0,
+                pointAfter = pointsAfter[pointAfterIdx],
+                pointsAt = getPointsAt(),
+                check_result,
+                idx_pair,
+                pair,
+                pairs,
+                prev_ts,
+                ts,
+                valid_ts,
+                time_diff,
+                len_pairs,
+                new_pair,
+                last_pair,
+                pointAtIdx,
+                pointAt,
+                formattedValue,
+                formattedStart,
+                formattedEnd;
             
             timeseries.sort(sortBookingsAsc);
             check_result = checkTimeSeriesValidity(timeseries);
@@ -875,33 +1158,41 @@ detectIDB(function (idb_capability) {
                     type: TYPE_AT_HOME,
                     synthetic: BOOKING_SYNTHETIC
                 });
-                console.log(pairs);
+                
+                // Insert special points of time which should occur after a given
+                // amount of hours.
+                // Do also calculate time_working, time_at_home and time_on_break.
                 len_pairs = pairs.length;
                 for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
                     pair = pairs[idx_pair];
                     time_diff = pair.end.diff(pair.start);
                     
                     if (pair.type === TYPE_WORKING) {
-                        if (insertedDailyWorkingTime === false &&
-                            (time_working + time_diff) >
-                                toMicroTime($scope.config.dailyWorkingTime)) {
-                            insertedDailyWorkingTime = true;
+                        if (pointAfter &&
+                                (time_working + time_diff) > pointAfter.value) {
                             len_pairs += 1;
                             
                             new_pair = {
                                 'start': pair.start.clone(),
                                 'end': pair.start.clone()
-                                    .add(toMicroTime($scope.config.dailyWorkingTime) -
-                                         time_working),
+                                    .add(pointAfter.value - time_working),
                                 'type': TYPE_WORKING,
                                 'synthetic': BOOKING_SYNTHETIC,
-                                'dailyWorkingTime': BOOKING_DAILY_WORKING_TIME
+                                'endTitle': pointAfter.title,
+                                'endClass': pointAfter.class
                             };
                             
                             pair.start = new_pair.end.clone();
                             pairs.splice(idx_pair, 0, new_pair);
                             
                             pair = new_pair;
+                            
+                            pointAfterIdx += 1;
+                            pointAfter = pointsAfter[pointAfterIdx];
+                        } else if (pointAfter &&
+                            (time_working + time_diff) === pointAfter.value) {
+                            pair.endTitle = pointAfter.title;
+                            pair.endClass = pointAfter.class;
                         }
                         
                         time_diff = pair.end.diff(pair.start);
@@ -913,6 +1204,59 @@ detectIDB(function (idb_capability) {
                     }
                     
                     pair.duration = getReadableDiff(pair.end - pair.start);
+                }
+                
+                // Insert special points of time which should occur after a given
+                // timestamp.
+                for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
+                    pair = pairs[idx_pair];
+                    
+                    if (pair.type !== TYPE_WORKING && pair.type !== TYPE_ON_BREAK) {
+                        continue;
+                    }
+                    
+                    for (pointAtIdx = 0; pointAtIdx < pointsAt.length; pointAtIdx += 1) {
+                        pointAt = pointsAt[pointAtIdx];
+                        formattedValue = pointAt.value.format('HH:mm');
+                        formattedStart = pair.start.format('HH:mm');
+                        formattedEnd = pair.end.format('HH:mm');
+                        
+                        if (idx_pair === 0 && formattedStart === formattedValue) {
+                            pair.startTitle = pointAt.title;
+                            pair.startclass = pointAt.class;
+                            pointAtIdx += 1;
+                        } else if (formattedEnd === formattedValue) {
+                            pair.endTitle = pointAt.title;
+                            pair.endclass = pointAt.class;
+                            pointAtIdx += 1;
+                        } else if (formattedStart < formattedValue &&
+                            formattedValue < formattedEnd) {
+                            len_pairs += 1;
+                            
+                            new_pair = {
+                                'start': pair.start.clone(),
+                                'end': pointAt.value.clone().date(pair.start.date())
+                                    .month(pair.start.month()).year(pair.start.year()),
+                                'type': pair.type,
+                                'synthetic': BOOKING_SYNTHETIC,
+                                'endTitle': pointAt.title,
+                                'endClass': pointAt.class
+                            };
+
+                            pair.start = new_pair.end.clone();
+                            pairs.splice(idx_pair, 0, new_pair);
+
+                            pair = new_pair;
+
+                            pointAtIdx += 1;
+                        }
+                    }
+                    
+                    pair.duration = getReadableDiff(pair.end - pair.start);
+                }
+                
+                for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
+                    pair = pairs[idx_pair];
                     pair.svg = {
                         x: SVG_PADDING_H,
                         y1: SVG_PADDING_V +
@@ -928,14 +1272,14 @@ detectIDB(function (idb_capability) {
                         type_text_y: SVG_PADDING_V +
                             (idx_pair * SVG_LINE_HEIGHT) + SVG_TYPE_TEXT_V_OFFSET
                     };
-                    
-                    //console.log(pair);
                 }
                 
                 $scope.timeTable.timeWorking = getReadableDiff(time_working);
                 $scope.timeTable.timeOnBreak = getReadableDiff(time_on_break);
                 $scope.timeTable.timeAtHome = getReadableDiff(time_at_home);
                 $scope.timeTable.timePairs = pairs;
+                $scope.timeTable.overtime = getReadableDiff(time_working -
+                    toMicroTime($scope.config.dailyWorkingTime));
                 $scope.timeTable.error = error;
                 $scope.timeTable.svg.height = pair.svg.y2 + SVG_PADDING_V;
             } else {
@@ -951,6 +1295,7 @@ detectIDB(function (idb_capability) {
                 
                 $scope.timeTable.timeWorking = 0;
                 $scope.timeTable.timeOnBreak = 0;
+                $scope.timeTable.overtime = 0;
                 $scope.timeTable.timePairs = [];
                 $scope.timeTable.error = error;
             }
@@ -963,396 +1308,7 @@ detectIDB(function (idb_capability) {
         }());
     }
 
-    angular
-        .module(
-            MODULE_NAME,
-            [
-                'ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate',
-                'ngMessages'
-            ]
-        )
-        .directive('focusMe', ['$timeout', '$parse', function ($timeout, $parse) {
-            return {
-                link: function (scope, element, attrs) {
-                    var model = $parse(attrs.focusMe);
-                    scope.$watch(model, function (value) {
-                        if (value === true) {
-                            $timeout(function () {
-                                element[0].focus();
-                                element[0].click();
-                            });
-                        }
-                    });
-                    
-                    element.bind('blur', function () {
-                        scope.$apply(model.assign(scope, false));
-                    });
-                }
-            }
-        }])
-        .controller('TimeTrackrCtrl', TimeTrackrCtrl)
-        .config(function ($mdDateLocaleProvider) {
-            $mdDateLocaleProvider.formatDate = function (date) {
-                return moment(date).format('YYYY-MM-DD');
-            };
-        })
-        .config(function ($translateProvider) {
-            $translateProvider
-                .translations('en_US', {
-                    'TOAST_DELETE_SINGLE': (
-                        'Deleted booking.'
-                    ),
-                    'TOAST_DELETE_ALL': (
-                        'Deleted all bookings.'
-                    ),
-                    'TOAST_UPDATE_BOOKING': (
-                        'Updated booking.'
-                    ),
-                    'TOAST_INSERT_BOOKING': (
-                        'Inserted booking.'
-                    ),
-                    'UNDO': (
-                        'undo'
-                    ),
-                    'BOOKING_COMING': (
-                        'coming'
-                    ),
-                    'BOOKING_LEAVING': (
-                        'leaving'
-                    ),
-                    'BOOKING_SYNTHETIC': (
-                        'fictional'
-                    ),
-                    'BOOKING_NON_SYNTHETIC': (
-                        'actual'
-                    ),
-                    'BOOKING_DAILY_WORKING_TIME': (
-                        'reached daily working time'
-                    ),
-                    'OCLOCK': (
-                        'o\'clock'
-                    ),
-                    'NOT_AVAILABLE': (
-                        'Not yet available!'
-                    ),
-                    'NO_BOOKINGS_BY_NOW': (
-                        'There are no bookings by now.'
-                    ),
-                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': (
-                        'Click here to delete all tracked bookings'
-                    ),
-                    'LABEL_ARIA_UPDATE_TIMELINE': (
-                        'Click here to update the timeline'
-                    ),
-                    'LABEL_BOOKING_TYPE': (
-                        'Type'
-                    ),
-                    'LABEL_BOOKING_DATE': (
-                        'Date'
-                    ),
-                    'LABEL_BOOKING_TIME': (
-                        'Time'
-                    ),
-                    'LABEL_UPDATE_TIMELINE': (
-                        'Update timeline'
-                    ),
-                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': (
-                        'Delete all tracked bookings'
-                    ),
-                    'LABEL_DELETE_ALL_BOOKINGS': (
-                        'Delete all bookings'
-                    ),
-                    'DIALOG_TITLE_DELETE_ALL': (
-                        'Do you really want to delete all bookings?'
-                    ),
-                    'DIALOG_CONTENT_DELETE_ALL': (
-                        'If you confirm this, really ALL bookings are beeing deleted!'
-                    ),
-                    'DIALOG_CONFIRM_DELETE_ALL': (
-                        'Yes, I do!'
-                    ),
-                    'DIALOG_CANCEL_DELETE_ALL': (
-                        'Maybe not'
-                    ),
-                    'DIALOG_TITLE_EDIT_BOOKING': (
-                        'Edit booking'
-                    ),
-                    'DAILY_WORKINGTIME': (
-                        'Daily working time'
-                    ),
-                    'DAILY_WORKINGTIME_PLACEHOLDER': (
-                        '8 h'
-                    ),
-                    'DAILY_RESTPERIOD': (
-                        'Daily rest period'
-                    ),
-                    'DAILY_RESTPERIOD_PLACEHOLDER': (
-                        '11 h'
-                    ),
-                    'MAX_DAILY_WORKINGTIME': (
-                        'Maximum daily working time'
-                    ),
-                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': (
-                        '10 h'
-                    ),
-                    'SAVE': (
-                        'Save'
-                    ),
-                    'OK': (
-                        'Ok'
-                    ),
-                    'CANCEL': (
-                        'Cancel'
-                    ),
-                    'TYPE_WORKING': (
-                        'Working'
-                    ),
-                    'TYPE_ON_BREAK': (
-                        'On Break'
-                    ),
-                    'TYPE_AT_HOME': (
-                        'Daily rest period'
-                    ),
-                    'SUBHEADER_MISC_SETTINGS': (
-                        'Miscellaneous'
-                    ),
-                    'SUBHEADER_WORKINGTIME_SETTINGS': (
-                        'Working time settings'
-                    ),
-                    'SUBHEADER_ABOUT_SETTINGS': (
-                        'About TimeTrackr'
-                    ),
-                    'SUBHEADER_TIMELINE': (
-                        'Calculated timeline'
-                    ),
-                    'SUBHEADER_TIMELINE_INFO': (
-                        'Additional information'
-                    ),
-                    'DATABASE_ENGINE': (
-                        'Database engine'
-                    ),
-                    'DATABASE_ENGINE_USED': (
-                        'Using'
-                    ),
-                    'DEVELOPED_BY': (
-                        'Developed by'
-                    ),
-                    'FORMAT_TIME': (
-                        'Format: HH:MM'
-                    ),
-                    'REQUIRED_TIME': (
-                        'Please provide a time for the booking.'
-                    ),
-                    'INVALID_TIME': (
-                        'Please provide a valid time for the booking.'
-                    ),
-                    'REQUIRED_TYPE': (
-                        'Please choose a booking type.'
-                    ),
-                    'INVALIDE_TYPE': (
-                        'Please choose a valid booking type.'
-                    ),
-                    'REQUIRED_DATE': (
-                        'Please select or enter a booking date.'
-                    ),
-                    'INVALID_DATE': (
-                        'Please enter a valid booking date.'
-                    ),
-                    'UPDATE_TIMETABLE': (
-                        'Calculate times'
-                    )
-                })
-                .translations('de_DE', {
-                    'TOAST_DELETE_SINGLE': (
-                        'Buchung wurde gelöscht.'
-                    ),
-                    'TOAST_DELETE_ALL': (
-                        'Alle Buchungen wurden gelöscht.'
-                    ),
-                    'TOAST_UPDATE_BOOKING': (
-                        'Buchung wurde aktualisiert.'
-                    ),
-                    'TOAST_INSERT_BOOKING': (
-                        'Buchung wurde eingefügt.'
-                    ),
-                    'UNDO': (
-                        'Rückgängig'
-                    ),
-                    'BOOKING_COMING': (
-                        'kommen'
-                    ),
-                    'BOOKING_LEAVING': (
-                        'gehen'
-                    ),
-                    'BOOKING_SYNTHETIC': (
-                        'imaginär'
-                    ),
-                    'BOOKING_NON_SYNTHETIC': (
-                        'tatsächlich'
-                    ),
-                    'BOOKING_DAILY_WORKING_TIME': (
-                        'tägliche Arbeitszeit erreicht'
-                    ),
-                    'OCLOCK': (
-                        'Uhr'
-                    ),
-                    'NOT_AVAILABLE': (
-                        'Noch nicht verfügbar!'
-                    ),
-                    'NO_BOOKINGS_BY_NOW': (
-                        'Momentan sind keine aufgezeichneten Buchungen vorhanden.'
-                    ),
-                    'LABEL_ARIA_DELETE_ALL_BOOKINGS': (
-                        'Klicken Sie hier, um alle aufgezeichneten Buchungen zu löschen'
-                    ),
-                    'LABEL_ARIA_UPDATE_TIMELINE': (
-                        'Klicken Sie hier, um den Zeitstrahl zu aktualisieren'
-                    ),
-                    'LABEL_BOOKING_TYPE': (
-                        'Art'
-                    ),
-                    'LABEL_BOOKING_DATE': (
-                        'Datum'
-                    ),
-                    'LABEL_BOOKING_TIME': (
-                        'Uhrzeit'
-                    ),
-                    'LABEL_UPDATE_TIMELINE': (
-                        'Zeitstrahl aktualisieren'
-                    ),
-                    'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS': (
-                        'Delete all tracked bookings'
-                    ),
-                    'LABEL_DELETE_ALL_BOOKINGS': (
-                        'Alle Buchungen löschen'
-                    ),
-                    'DIALOG_TITLE_DELETE_ALL': (
-                        'Möchten Sie wirklich alle Buchungen löschen?'
-                    ),
-                    'DIALOG_CONTENT_DELETE_ALL': (
-                        'Wenn Sie dies bestätigen, werden wirklich ALLE Buchungen gelöscht!'
-                    ),
-                    'DIALOG_CONFIRM_DELETE_ALL': (
-                        'Ja, ich will!'
-                    ),
-                    'DIALOG_CANCEL_DELETE_ALL': (
-                        'Lieber nicht'
-                    ),
-                    'DIALOG_TITLE_EDIT_BOOKING': (
-                        'Buchung bearbeiten'
-                    ),
-                    'DAILY_WORKINGTIME': (
-                        'Tägliche Arbeitszeit'
-                    ),
-                    'DAILY_WORKINGTIME_PLACEHOLDER': (
-                        '8 h'
-                    ),
-                    'DAILY_RESTPERIOD': (
-                        'Tägliche Ruhezeit'
-                    ),
-                    'DAILY_RESTPERIOD_PLACEHOLDER': (
-                        '11 h'
-                    ),
-                    'MAX_DAILY_WORKINGTIME': (
-                        'Maximale tägliche Arbeitszeit'
-                    ),
-                    'MAX_DAILY_WORKINGTIME_PLACEHOLDER': (
-                        '10 h'
-                    ),
-                    'SAVE': (
-                        'Speichern'
-                    ),
-                    'OK': (
-                        'Ok'
-                    ),
-                    'CANCEL': (
-                        'Abbrechen'
-                    ),
-                    'TYPE_WORKING': (
-                        'Bei der Arbeit'
-                    ),
-                    'TYPE_ON_BREAK': (
-                        'In Pause'
-                    ),
-                    'TYPE_AT_HOME': (
-                        'Tägl. Ruhezeit'
-                    ),
-                    'SUBHEADER_MISC_SETTINGS': (
-                        'Sonstiges'
-                    ),
-                    'SUBHEADER_WORKINGTIME_SETTINGS': (
-                        'Arbeitszeiteinstellungen'
-                    ),
-                    'SUBHEADER_ABOUT_SETTINGS': (
-                        'Über TimeTrackr'
-                    ),
-                    'SUBHEADER_TIMELINE': (
-                        'Berechneter Zeitstrahl'
-                    ),
-                    'SUBHEADER_TIMELINE_INFO': (
-                        'Zusätzliche Informationen'
-                    ),
-                    'DATABASE_ENGINE': (
-                        'Datenbanktechnik'
-                    ),
-                    'DATABASE_ENGINE_USED': (
-                        'Nutze'
-                    ),
-                    'DEVELOPED_BY': (
-                        'Entwickelt von'
-                    ),
-                    'FORMAT_TIME': (
-                        'Format: HH:MM'
-                    ),
-                    'REQUIRED_TIME': (
-                        'Bitte geben Sie eine Uhrzeit für die Buchung ein.'
-                    ),
-                    'INVALID_TIME': (
-                        'Bitte geben Sie eine gültige Uhrzeit für die Buchung ein.'
-                    ),
-                    'REQUIRED_TYPE': (
-                        'Bitte wählen Sie eine Buchungsart aus.'
-                    ),
-                    'INVALIDE_TYPE': (
-                        'Bitte wählen Sie eine gültige Buchungsart aus.'
-                    ),
-                    'REQUIRED_DATE': (
-                        'Bitte wählen Sie ein Buchungsdatum aus.'
-                    ),
-                    'INVALID_DATE': (
-                        'Bitte geben Sie ein gültiges Buchungsdatum ein.'
-                    ),
-                    'UPDATE_TIMETABLE': (
-                        'Zeiten berechnen'
-                    )
-                })
-                .preferredLanguage('de_DE')
-                .useSanitizeValueStrategy('sanitizeParameters');
-        })
-        .config(function ($mdThemingProvider) {
-            $mdThemingProvider.definePalette('white', {
-                '50': 'ffffff',
-                '100': 'ffffff',
-                '200': 'ffffff',
-                '300': 'ffffff',
-                '400': 'ffffff',
-                '500': 'ffffff',
-                '600': 'ffffff',
-                '700': 'ffffff',
-                '800': 'ffffff',
-                '900': 'ffffff',
-                'A100': 'ffffff',
-                'A200': 'ffffff',
-                'A400': 'ffffff',
-                'A700': 'ffffff',
-                'contrastDefaultColor': 'dark'
-            });
-            
-            $mdThemingProvider
-                .theme('default')
-                .primaryPalette('deep-orange')
-                .accentPalette('white');
-        });
+    angular.module(MODULE_NAME).controller('TimeTrackrCtrl', TimeTrackrCtrl);
 
     if (database_backend === DATABASE_IDB) {
         angular
@@ -1373,10 +1329,8 @@ detectIDB(function (idb_capability) {
                         db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
                     })
                     .upgradeDatabase(3, function (evt, db, tx) {
-                        var objStore = db.createObjectStore(
-                               'trackedBookings',
-                               { keyPath: 'timestamp' }
-                            );
+                        var objStore = db.createObjectStore('trackedBookings',
+                                { keyPath: 'timestamp' });
 
                         objStore.createIndex('type_idx', 'type', { unique: false });
                         objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });

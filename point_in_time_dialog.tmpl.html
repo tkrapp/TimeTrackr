@@ -1,0 +1,73 @@
+<md-dialog md-theme="point-of-time-dialog"
+           aria-label="Add/edit point in time">
+    <form ng-cloak="ng-cloak"
+          ng-submit="answer(type, hours, timestamp)">
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <md-button class="md-icon-button"
+                           ng-click="cancel()">
+                    <md-icon md-svg-src="static/icons/close.svg"
+                             aria-label="Close dialog"></md-icon>
+                </md-button>
+                <span flex="flex"></span>
+                <md-button type="submit"
+                           class="md-button">
+                    {{ 'SAVE' | translate }}
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content>
+            <div class="md-dialog-content"
+                 flex="flex"
+                 layout="row">
+                <md-input-container flex="100">
+                    <label>
+                        {{ 'LABEL_POINT_OF_TIME_TITLE' | translate }}
+                    </label>
+                    <input type="text"
+                           ng-model="title"
+                           required="required" />
+                </md-input-container>
+            </div>
+            <div class="md-dialog-content"
+                 flex="flex"
+                 layout="row">
+                <md-input-container flex="100">
+                    <label>
+                        {{ 'LABEL_POINT_OF_TIME_TYPE' | translate }}
+                    </label>
+                    <md-select name="type"
+                               ng-model="type"
+                               required="required">
+                        <md-option ng-repeat="type in availableTypes"
+                                   ng-value="type.value">
+                            {{ type.text | translate }}
+                        </md-option>
+                    </md-select>
+                </md-input-container>
+                <md-input-container ng-if="type === valueAfter"
+                                    flex="100">
+                    <label>
+                        {{ 'LABEL_POINT_OF_TIME_HOURS' | translate }}
+                    </label>
+                    <input type="number"
+                           step="any"
+                           name="hours"
+                           ng-model="$parent.hours"
+                           required="required" />
+                </md-input-container>
+                <md-input-container ng-if="type === valueAt"
+                                    flex="100">
+                    <label>
+                        {{ 'LABEL_POINT_OF_TIME_TIMESTAMP' | translate }}
+                    </label>
+                    <input type="time"
+                           name="timestamp"
+                           ng-model="$parent.timestamp"
+                           required="required" />
+                </md-input-container>
+                
+            </div>
+        </md-dialog-content>
+    </form>
+</md-dialog>

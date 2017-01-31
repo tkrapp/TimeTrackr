@@ -1,3 +1,15 @@
+.hideable {
+    transition: opacity 0.1s linear, visibility 0s 0.1s;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.hideable.visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.1s linear, visibility 0s;
+}
+
 .new-booking-speeddial {
     transition: opacity 0.1s linear, visibility 0s 0.1s;
     opacity: 0;

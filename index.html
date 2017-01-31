@@ -32,30 +32,62 @@
 </head>
 
 <body>
-    <div id="app-container" layout-fill ng-controller="TimeTrackrCtrl" ng-cloak>
-        <div id="main-view" layout="column" layout-fill ng-show="views.main.visible">
+    <div id="app-container"
+         layout-fill
+         ng-controller="TimeTrackrCtrl"
+         ng-cloak>
+        <div id="main-view"
+             layout="column"
+             layout-fill
+             ng-show="views.main.visible">
             <md-toolbar class="site-content-toolbar">
                 <div class="md-toolbar-tools">
-                    <span>TimeTrackr</span>
+                    <h2>TimeTrackr</h2>
+                    <span flex></span>
+                    <md-button class="md-icon-button delete-selected-bookings hideable"
+                               aria-label="Delete selected bookings"
+                               ng-class="{
+                                   visible: selectedBookings.length > 0 &&
+                                         views.main.visible &&
+                                         selectedTab == 0
+                               }"
+                               ng-click="deleteSelectedBookings(selectedBookings)">
+                        <md-icon md-svg-src="static/icons/delete.svg"></md-icon>
+                    </md-button>
                 </div>
             </md-toolbar>
-            <md-tabs class="app-tabs md-primary" flex layout="column" md-stretch-tabs="always" md-selected="selectedTab" md-swipe-content="false">
-                <md-tab layout="column" id="tab-tracking" class="md-primary">
+            <md-tabs class="app-tabs md-primary"
+                     flex
+                     layout="column"
+                     md-stretch-tabs="always"
+                     md-selected="selectedTab"
+                     md-swipe-content="false">
+                <md-tab layout="column"
+                        id="tab-tracking"
+                        class="md-primary">
                     <md-tab-label>
                         <md-icon md-svg-icon="static/icons/timer.svg"></md-icon>
                     </md-tab-label>
                     <md-tab-body>
                         <md-list class="list-tracking">
                             <!-- <md-subheader>Tracked Bookings</md-subheader> -->
-                            <md-list-item class="md-2-line secondary-button-padding" ng-repeat="booking in bookings">
+                            <md-list-item class="md-2-line secondary-button-padding"
+                                          ng-repeat="booking in bookings">
+                                <md-checkbox ng-model="booking.selected"
+                                             ng-change="updateSelectedBookings($event)">
+                                </md-checkbox>
                                 <div class="md-list-item-text">
                                     <h3>{{ booking.timestamp.format('dd Do MMM YYYY, HH:mm') }} <span translate="OCLOCK" /></h3>
                                     <p translate="{{ booking.type }}"></p>
                                 </div>
-                                <md-button class="md-secondary md-icon-button" aria-label="Edit booking" ng-click="showManualBookingView($event, booking)">
+                                <md-button class="md-secondary md-icon-button"
+                                           aria-label="Edit booking"
+                                           ng-click="showManualBookingView($event, booking)">
                                     <md-icon md-svg-icon="static/icons/edit_gry.svg"></md-icon>
                                 </md-button>
-                                <md-button class="md-secondary md-icon-button" aria-label="Delete booking" ng-click="deleteBooking(booking)">
+                                <md-button class="md-secondary md-icon-button"
+                                           aria-label="Delete booking"
+                                           ng-click="deleteBooking(booking)">
                                     <md-icon md-svg-icon="static/icons/delete_gry.svg"></md-icon>
                                 </md-button>
                             </md-list-item>
@@ -65,8 +97,9 @@
                         </md-list>
                     </md-tab-body>
                 </md-tab>
-                <md-tab id="tab-timetable">
-                    <md-tab-label class="md-primary" aria-label="Timetable">
+                <md-tab id="tab-timeline">
+                    <md-tab-label class="md-primary"
+                                  aria-label="Timeline">
                         <md-icon md-svg-icon="static/icons/schedule.svg"></md-icon>
                     </md-tab-label>
                     <md-tab-body>
@@ -114,8 +147,13 @@
                                             fill: #6C7B82;
                                         }
 
-                                        text.BOOKING_DAILY_WORKING_TIME {
+                                        text.end-title,
+                                        text.start-title {
                                             fill: #0277bd;
+                                        }
+                                        
+                                        text.alert.TYPE_WORKING {
+                                            fill: red;
                                         }
                                     </style>
                                     <line ng-repeat-start="timePair in timeTable.timePairs"
@@ -127,6 +165,12 @@
                                     <text ng-attr-x="{{ timePair.svg.point_text_x }}"
                                           ng-attr-y="{{ timePair.svg.point_text_y1 }}">
                                         {{ timePair.start.format('HH:mm') }}
+                                    </text>
+                                    <text ng-attr-class="{{ ['start-title', timePair.type, timePair.startClass].join(' ') }}"
+                                          ng-attr-x="{{ timePair.svg.type_text_x * 2 }}"
+                                          ng-attr-y="{{ timePair.svg.point_text_y1 }}"
+                                          ng-if="timePair.startTitle">
+                                        {{ timePair.startTitle | translate }}
                                     </text>
                                     <text ng-attr-x="{{ timePair.svg.type_text_x }}"
                                           ng-attr-y="{{ timePair.svg.type_text_y }}">
@@ -140,11 +184,11 @@
                                           ng-attr-y="{{ timePair.svg.type_text_y }}">
                                         {{ timePair.synthetic | translate }}
                                     </text>
-                                    <text ng-attr-x="{{ timePair.svg.type_text_x * 2 }}"
+                                    <text ng-attr-class="{{ ['end-title', timePair.type, timePair.endClass].join(' ') }}"
+                                          ng-attr-x="{{ timePair.svg.type_text_x * 2 }}"
                                           ng-attr-y="{{ timePair.svg.point_text_y2 }}"
-                                          ng-attr-class="{{ timePair.dailyWorkingTime }}"
-                                          ng-if="timePair.dailyWorkingTime">
-                                        {{ timePair.dailyWorkingTime | translate }}
+                                          ng-if="timePair.endTitle">
+                                        {{ timePair.endTitle | translate }}
                                     </text>
                                     <text ng-attr-x="{{ timePair.svg.point_text_x}}"
                                           ng-attr-y="{{ timePair.svg.point_text_y2 }}"
@@ -162,7 +206,7 @@
                                     <ellipse ng-repeat-end
                                              ng-attr-cx="{{ timePair.svg.x }}"
                                              ng-attr-cy="{{ timePair.svg.y2 }}"
-                                             ng-attr-class="{{ ['outer', timePair.dailyWorkingTime].join(' ') }}"
+                                             ng-attr-class="{{ ['outer', timePair.endTitle].join(' ') }}"
                                              rx="10"
                                              ry="10"
                                              class="outer" />
@@ -191,9 +235,17 @@
                             </md-subheader>
                             <md-list-item class="md-2-line">
                                 <div class="md-list-item-text">
+                                    <h3 translate="LABEL_OVERTIME"></h3>
+                                    <p>
+                                        {{ timeTable.overtime }} {{ HOURS | translate }}
+                                    </p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line">
+                                <div class="md-list-item-text">
                                     <h3 translate="TYPE_WORKING"></h3>
                                     <p>
-                                        {{ timeTable.timeWorking }} h
+                                        {{ timeTable.timeWorking }} {{ HOURS | translate }}
                                     </p>
                                 </div>
                             </md-list-item>
@@ -201,7 +253,7 @@
                                 <div class="md-list-item-text">
                                     <h3 translate="TYPE_ON_BREAK"></h3>
                                     <p>
-                                        {{ timeTable.timeOnBreak }} h
+                                        {{ timeTable.timeOnBreak }} {{ HOURS | translate }}
                                     </p>
                                 </div>
                             </md-list-item>
@@ -209,7 +261,7 @@
                                 <div class="md-list-item-text">
                                     <h3 translate="TYPE_AT_HOME"></h3>
                                     <p>
-                                        {{ timeTable.timeAtHome }} h
+                                        {{ timeTable.timeAtHome }} {{ HOURS | translate }}
                                     </p>
                                 </div>
                             </md-list-item>
@@ -243,15 +295,64 @@
                                     <p>{{ config.dailyRestPeriod | number:2 }} h</p>
                                 </div>
                             </md-list-item>
+                            
+                            
                             <md-subheader>
                                 {{ 'SUBHEADER_MISC_SETTINGS' | translate }}
                             </md-subheader>
-                            <md-list-item class="secondary-button-padding" ng-click="deleteAllBookings($event)">
+                            <md-list-item class="secondary-button-padding"
+                                          ng-click="deleteAllBookings($event)">
                                 <p translate="LABEL_DELETE_ALL_BOOKINGS"></p>
-                                <md-button class="md-secondary md-icon-button" ng-attr-aria-label="{{ 'LABEL_ARIA_DELETE_ALL_BOOKINGS' | translate }}" ng-click="deleteAllBookings($event)">
+                                <md-button class="md-secondary md-icon-button"
+                                           ng-attr-aria-label="{{ 'LABEL_ARIA_DELETE_ALL_BOOKINGS' | translate }}"
+                                           ng-click="deleteAllBookings($event)">
                                     <md-icon md-svg-icon="static/icons/delete_gry.svg" />
                                 </md-button>
                             </md-list-item>
+                            
+                            
+                            <md-subheader>
+                                {{ 'SUBHEADER_TIMELINE_SETTINGS' | translate }}
+                            </md-subheader>
+                            <md-list-item class="md-2-line secondary-button-padding"
+                                          ng-repeat="pointInTime in config.pointsInTime"
+                                          ng-repeat-end>
+                                <div class="md-list-item-text">
+                                    <h3>{{ pointInTime.title }}</h3>
+                                    <p ng-if="pointInTime.type === 'after'">
+                                        {{ 'OPTION_AFTER' | translate }}
+                                        {{ pointInTime.value }}
+                                        {{ 'HOURS' | translate }}
+                                    </p>
+                                    <p ng-if="pointInTime.type === 'at'">
+                                        {{ 'OPTION_AT' | translate }}
+                                        {{ pointInTime.value | amDateFormat:'HH:mm' }}
+                                        {{ 'OCLOCK' | translate }}
+                                    </p>
+                                    <md-button class="md-secondary md-icon-button"
+                                               ng-attr-aria-label="{{ 'LABEL_ARIA_DELETE_POINT_IN_TIME' | translate }}"
+                                               ng-click="deletePointInTime(pointInTime)">
+                                        <md-icon md-svg-icon="static/icons/delete_gry.svg" />
+                                    </md-button>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="md-2-line secondary-button-padding"
+                                          ng-if="!config.pointsInTime">
+                                <div class="md-list-item-text">
+                                    <h3>{{ 'EMPTY_NO_POINTS_IN_TIME_HEADER' | translate  }}</h3>
+                                    <p>{{ 'EMPTY_NO_POINTS_IN_TIME_CONTENT' | translate }}</p>
+                                </div>
+                            </md-list-item>
+                            <md-list-item class="seconday-button-padding"
+                                          ng-click="showPointInTimeDialog()">
+                                <p translate="LABEL_ADD_POINT_IN_TIME"></p>
+                                <md-button class="md-secondary md-icon-button"
+                                           ng-click="showPointInTimeDialog()">
+                                    <md-icon md-svg-icon="static/icons/add_gry.svg"></md-icon>
+                                </md-button>
+                            </md-list-item>
+                            
+                            
                             <md-subheader>
                                 {{ 'SUBHEADER_ABOUT_SETTINGS' | translate }}
                             </md-subheader>
@@ -267,8 +368,10 @@
                                     <p><span translate="DATABASE_ENGINE_USED"></span> {{ databaseEngine }}</p>
                                 </div>
                             </md-list-item>
+                            
+                            
                             <md-subheader>
-                                Debug Information
+                                {{ 'SUBHEADER_DEBUG_INFORMATION' | translate }}
                             </md-subheader>
                             <md-list-item class="md-2-line">
                                 <div class="md-list-item-text">
@@ -293,22 +396,37 @@
                 </md-tab>
             </md-tabs>
         </div>
-        <md-fab-speed-dial class="new-booking-speeddial md-fling" md-open="newBookingSpeedDial.isOpen" ng-class="{ visible: selectedTab == 0 && views.main.visible }" md-direction="up">
+        <md-fab-speed-dial class="new-booking-speeddial md-fling"
+                           md-open="newBookingSpeedDial.isOpen"
+                           ng-class="{ visible: selectedTab == 0 && views.main.visible }"
+                           md-direction="up">
             <md-fab-trigger>
-                <md-button class="md-fab md-warn" aria-label="Track Booking" ng-click="newBookingSpeedDial.trigger($event)">
+                <md-button class="md-fab md-warn"
+                           aria-label="Track Booking"
+                           ng-click="newBookingSpeedDial.trigger($event)">
                     <md-icon md-svg-icon="static/icons/add.svg"></md-icon>
                 </md-button>
             </md-fab-trigger>
             <md-fab-actions>
-                <md-button class="md-fab md-raised md-mini" aria-label="Track Booking" ng-click="showManualBookingView($event)">
+                <md-button class="md-fab md-raised md-mini"
+                           aria-label="Track Booking"
+                           ng-click="showManualBookingView($event)">
                     <md-icon md-svg-icon="static/icons/add_details_gry.svg"></md-icon>
                 </md-button>
             </md-fab-actions>
         </md-fab-speed-dial>
-        <form name="manualBookingForm" id="manual-booking-view" ng-submit="saveManualBooking($event)" layout="column" layout-fill ng-cloak ng-show="views.manualBooking.visible">
+        <form name="manualBookingForm"
+              id="manual-booking-view"
+              ng-submit="saveManualBooking($event)"
+              layout="column"
+              layout-fill
+              ng-cloak
+              ng-show="views.manualBooking.visible">
             <md-toolbar class="manual-booking-toolbar md-accent">
                 <div class="md-toolbar-tools">
-                    <md-button class="md-icon-button" ng-click="hideManualBookingView($event)" ng-attr-aria-label="{{ 'CLOSE' | translate }}">
+                    <md-button class="md-icon-button"
+                               ng-click="hideManualBookingView($event)"
+                               ng-attr-aria-label="{{ 'CLOSE' | translate }}">
                         <md-icon md-svg-icon="static/icons/close_gry.svg"></md-icon>
                     </md-button>
                     <span flex></span>
@@ -347,8 +465,14 @@
                     <md-button class="md-icon-button" ng-click="manualBooking.focusType=true">
                         <md-icon md-svg-icon="static/icons/nature_gry.svg" aria-hidden="true"></md-icon>
                     </md-button>
-                    <md-select name="typeField" ng-model="manualBooking.type" focus-me="manualBooking.focusType" required>
-                        <md-option ng-repeat="type in manualBooking.availableTypes" ng-value="type.value">{{ type.html }}</md-option>
+                    <md-select name="typeField"
+                               ng-model="manualBooking.type"
+                               focus-me="manualBooking.focusType"
+                               required>
+                        <md-option ng-repeat="type in manualBooking.availableTypes"
+                                   ng-value="type.value">
+                            {{ type.html }}
+                        </md-option>
                     </md-select>
                     <div>
                         <div class="md-errors-spacer"></div>
@@ -373,6 +497,7 @@
     <script type="text/javascript" src="static/js/lib/angular-animate.min.js"></script>
     <script type="text/javascript" src="static/js/lib/angular-aria.min.js"></script>
     <script type="text/javascript" src="static/js/lib/angular-messages.min.js"></script>
+    <script type="text/javascript" src="static/js/lib/angular-moment.min.js"></script>
     <script type="text/javascript" src="static/js/lib/angular-sanitize.js"></script>
 
     <!-- Angular.js Locales -->
@@ -389,6 +514,8 @@
     <script type="text/javascript" src="static/js/lib/angular-material.min.js"></script>
 
     <!-- Your application bootstrap  -->
-    <script language="javascript" src="static/js/app.js"></script>
+    <script language="javascript" src="static/js/app.config.js"></script>
+    <script language="javascript" src="static/js/app.translations.js"></script>
+    <script language="javascript" src="static/js/app.controller.js"></script>
 </body>
 </html>
