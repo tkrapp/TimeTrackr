@@ -294,22 +294,26 @@ detectIDB(function (idb_capability) {
             $translate([
                 'DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL'
             ]).then(function (translations) {
-                var promptDialog = $mdDialog.prompt();
-                
-                promptDialog
-                    .title(translations.DAILY_WORKINGTIME)
-                    .placeholder(translations.DAILY_WORKINGTIME_PLACEHOLDER)
-                    .ariaLabel(translations.DAILY_WORKINGTIME)
-                    .initialValue($scope.config.dailyWorkingTime)
-                    .targetEvent(evt)
-                    .ok(translations.OK)
-                    .cancel(translations.CANCEL);
-                
-                $mdDialog
-                    .show(promptDialog)
-                    .then(function (result) {
-                        $scope.config.dailyWorkingTime = parseFloat(result);
-                    });
+                $mdDialog.show({
+                    locals: {
+                        inputData: {
+                            value: $scope.config.dailyWorkingTime,
+                            title: translations.DAILY_WORKINGTIME,
+                            placeholder: translations.DAILY_WORKINGTIME_PLACEHOLDER,
+                            ariaLabel: translations.DAILY_WORKINGTIME,
+                            ok: translations.OK,
+                            cancel: translations.CANCEL
+                        }
+                    },
+                    controller: NumberInputController,
+                    templateUrl: 'number_input_dialog.tmpl.html',
+                    parent: angular.element(document.body),
+                    targetEvent: evt,
+                    clickOutsideToClose:true
+                })
+                .then(function(answer) {
+                    $scope.config.dailyWorkingTime = parseFloat(answer);
+                });
             });
         };
         
@@ -318,22 +322,26 @@ detectIDB(function (idb_capability) {
                 'MAX_DAILY_WORKINGTIME', 'MAX_DAILY_WORKINGTIME_PLACEHOLDER', 'OK',
                 'CANCEL'
             ]).then(function (translations) {
-                var promptDialog = $mdDialog.prompt();
-                
-                promptDialog
-                    .title(translations.MAX_DAILY_WORKINGTIME)
-                    .placeholder(translations.MAX_DAILY_WORKINGTIME_PLACEHOLDER)
-                    .ariaLabel(translations.MAX_DAILY_WORKINGTIME)
-                    .initialValue($scope.config.maxDailyWorkingTime)
-                    .targetEvent(evt)
-                    .ok(translations.OK)
-                    .cancel(translations.CANCEL);
-                
-                $mdDialog
-                    .show(promptDialog)
-                    .then(function (result) {
-                        $scope.config.maxDailyWorkingTime = parseFloat(result);
-                    });
+                $mdDialog.show({
+                    locals: {
+                        inputData: {
+                            value: $scope.config.maxDailyWorkingTime,
+                            title: translations.MAX_DAILY_WORKINGTIME,
+                            placeholder: translations.MAX_DAILY_WORKINGTIME_PLACEHOLDER,
+                            ariaLabel: translations.MAX_DAILY_WORKINGTIME,
+                            ok: translations.OK,
+                            cancel: translations.CANCEL
+                        }
+                    },
+                    controller: NumberInputController,
+                    templateUrl: 'number_input_dialog.tmpl.html',
+                    parent: angular.element(document.body),
+                    targetEvent: evt,
+                    clickOutsideToClose:true
+                })
+                .then(function(answer) {
+                    $scope.config.maxDailyWorkingTime = parseFloat(answer);
+                });
             });
         };
         
@@ -341,24 +349,44 @@ detectIDB(function (idb_capability) {
             $translate([
                 'DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER', 'OK', 'CANCEL'
             ]).then(function (translations) {
-                var promptDialog = $mdDialog.prompt();
-                
-                promptDialog
-                    .title(translations.DAILY_RESTPERIOD)
-                    .placeholder(translations.DAILY_RESTPERIOD_PLACEHOLDER)
-                    .ariaLabel(translations.DAILY_RESTPERIOD)
-                    .initialValue($scope.config.dailyRestPeriod)
-                    .targetEvent(evt)
-                    .ok(translations.OK)
-                    .cancel(translations.CANCEL);
-                
-                $mdDialog
-                    .show(promptDialog)
-                    .then(function (result) {
-                        $scope.config.dailyRestPeriod = parseFloat(result);
-                    });
+                $mdDialog.show({
+                    locals: {
+                        inputData: {
+                            value: $scope.config.dailyRestPeriod,
+                            title: translations.DAILY_RESTPERIOD,
+                            placeholder: translations.DAILY_RESTPERIOD_PLACEHOLDER,
+                            ariaLabel: translations.DAILY_RESTPERIOD,
+                            ok: translations.OK,
+                            cancel: translations.CANCEL
+                        }
+                    },
+                    controller: NumberInputController,
+                    templateUrl: 'number_input_dialog.tmpl.html',
+                    parent: angular.element(document.body),
+                    targetEvent: evt,
+                    clickOutsideToClose:true
+                })
+                .then(function(answer) {
+                    $scope.config.dailyRestPeriod = parseFloat(answer);
+                });
             });
         };
+        
+        function NumberInputController ($scope, $mdDialog, inputData) {
+            $scope.hide = $mdDialog.hide;
+            $scope.close = $mdDialog.cancel;
+            $scope.answer = function () {
+                $mdDialog.hide($scope.value);
+            };
+            
+            $scope.value = inputData.value;
+            $scope.title = inputData.title;
+            $scope.placeholder = inputData.placeholder;
+            $scope.ariaLabel = inputData.ariaLabel;
+            $scope.ok = inputData.ok || 'OK';
+            $scope.cancel = inputData.cancel || 'CANCEL';
+            $scope.step = inputData.step || 'any';
+        }
         
         $scope.showPointInTimeDialog = function(ev) {
             $mdDialog.show({
@@ -463,7 +491,7 @@ detectIDB(function (idb_capability) {
                     value: value,
                     title: $scope.title
                 });
-            }
+            };
             
             $scope.valueAfter = 'after';
             $scope.valueAt = 'at';
@@ -671,6 +699,45 @@ detectIDB(function (idb_capability) {
             return today;
         }
         
+        function ManualBookingController ($scope, $mdDialog, inputData) {
+            $scope.hide = $mdDialog.hide;
+            $scope.close = $mdDialog.cancel;
+            $scope.answer = function () {
+                var value;
+                
+                switch ($scope.type) {
+                    case $scope.valueAfter:
+                        value = $scope.hours;
+                        break;
+                    
+                    default:
+                        value = $scope.timestamp;
+                }
+                
+                $mdDialog.hide({
+                    type: $scope.type,
+                    value: value,
+                    title: $scope.title
+                });
+            };
+            
+            $scope.valueAfter = 'after';
+            $scope.valueAt = 'at';
+            $scope.availableTypes = [
+                {
+                    value: $scope.valueAfter,
+                    text: 'OPTION_AFTER'
+                },
+                {
+                    value: $scope.valueAt,
+                    text: 'OPTION_AT'
+                }
+            ];
+            $scope.type = inputData.type || $scope.availableTypes[0].value;
+            $scope.title = inputData.title || '';
+            $scope.hours = undefined;
+            $scope.timestamp = undefined;
+        }
         $scope.showManualBookingView = function (evt, booking) {
             var manualBooking = $scope.manualBooking,
                 date,
