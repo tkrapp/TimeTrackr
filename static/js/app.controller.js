@@ -233,10 +233,6 @@ detectIDB(function (idb_capability) {
             }
         };
         
-        $scope.focusInputElement = function (evt) {
-            console.log(this, evt);
-        };
-        
         $scope.bookings = [];
         $scope.selectedBookings = [];
         $scope.databaseEngine = 'IndexedDB';
@@ -700,139 +696,134 @@ detectIDB(function (idb_capability) {
         }
         
         function ManualBookingController ($scope, $mdDialog, inputData) {
-            $scope.hide = $mdDialog.hide;
-            $scope.close = $mdDialog.cancel;
-            $scope.answer = function () {
-                var value;
-                
-                switch ($scope.type) {
-                    case $scope.valueAfter:
-                        value = $scope.hours;
-                        break;
-                    
-                    default:
-                        value = $scope.timestamp;
-                }
-                
-                $mdDialog.hide({
-                    type: $scope.type,
-                    value: value,
-                    title: $scope.title
-                });
-            };
-            
-            $scope.valueAfter = 'after';
-            $scope.valueAt = 'at';
-            $scope.availableTypes = [
-                {
-                    value: $scope.valueAfter,
-                    text: 'OPTION_AFTER'
-                },
-                {
-                    value: $scope.valueAt,
-                    text: 'OPTION_AT'
-                }
-            ];
-            $scope.type = inputData.type || $scope.availableTypes[0].value;
-            $scope.title = inputData.title || '';
-            $scope.hours = undefined;
-            $scope.timestamp = undefined;
+            $translate([
+                'BOOKING_COMING', 'BOOKING_LEAVING'
+            ]).then(function (translations) {
+                $scope.hide = $mdDialog.hide;
+                $scope.close = $mdDialog.cancel;
+                $scope.answer = function () {
+                    $mdDialog.hide({
+                        isOld: inputData.isOld,
+                        type: $scope.type,
+                        date: $scope.date,
+                        time: $scope.time
+                    });
+                };
+
+                $scope.availableTypes = [
+                    {
+                        value: BOOKING_COMING,
+                        html: translations.BOOKING_COMING
+                    },
+                    {
+                        value: BOOKING_LEAVING,
+                        html: translations.BOOKING_LEAVING
+                    }
+                ];
+                $scope.type = inputData.type;
+                $scope.time = inputData.time;
+                $scope.date = inputData.date;
+                $scope.timeFocused = false;
+                $scope.focusTime = function () {
+                    $scope.timeFocused = true;
+                };
+            });
         }
+        
         $scope.showManualBookingView = function (evt, booking) {
-            var manualBooking = $scope.manualBooking,
-                date,
-                time,
-                type,
-                is_new,
-                old_key;
+            var inputData = {
+                    date: getToday(),
+                    time: '',
+                    type: null,
+                    isOld: !!booking
+                },
+                oldBooking = booking;
             
             if (booking) {
-                date = booking.timestamp.toDate();
-                time = booking.timestamp.toDate();
-                type = booking.type;
-            } else {
-                date = getToday();
-                time = '';
-                type = null;
+                inputData.date = booking.timestamp.toDate();
+                inputData.time = booking.timestamp.toDate();
+                inputData.type = booking.type;
             }
             
-            manualBooking.oldBooking = booking;
-            manualBooking.new = !!booking;
-            manualBooking.date = date;
-            manualBooking.time = time;
-            manualBooking.type = type;
-            
-            $scope.showView('manualBooking');
-        };
-        
-        $scope.hideManualBookingView = function (evt) {
-            $scope.showView('main');
+            $mdDialog.show({
+                locals: {
+                    inputData: inputData
+                },
+                controller: ManualBookingController,
+                templateUrl: 'edit_booking_dialog.tmpl.html',
+                parent: angular.element(document.body),
+                targetEvent: evt,
+                clickOutsideToClose: true,
+                fullscreen: true
+            })
+            .then(function(answer) {
+                $translate([
+                    'TOAST_UPDATE_BOOKING', 'UNDO'
+                ]).then(function (translations) {
+                    var toast = $mdToast.simple(),
+                        time = answer.time,
+                        type = answer.type,
+                        timestamp = moment(answer.date),
+                        oldTimestamp,
+                        oldType;
+
+                    timestamp
+                        .hours(time.getHours())
+                        .minutes(time.getMinutes())
+                        .seconds(time.getSeconds())
+                        .milliseconds(time.getMilliseconds());
+                    console.log(answer);
+                    if (answer.isOld === true) {
+                        oldTimestamp = oldBooking.timestamp;
+                        oldType = oldBooking.type;
+
+                        oldBooking.timestamp = timestamp;
+                        oldBooking.type = type;
+
+                        toast
+                            .textContent(translations.TOAST_UPDATE_BOOKING)
+                            .action(translations.UNDO)
+                            .highlightAction(true)
+                            .highlightClass('md-primary')
+                            .hideDelay(TOAST_DELAY);
+
+                        $mdToast
+                            .show(toast)
+                            .then(function (response) {
+                                if (response === undefined) {
+                                    storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                        store
+                                            .delete(oldTimestamp.unix())
+                                            .then(function() {
+                                                store
+                                                    .insert({
+                                                        'type': type,
+                                                        'timestamp': timestamp.unix()
+                                                    })
+                                                    .then(updateBookings);
+                                            });
+                                    });
+                                } else {
+                                    oldBooking.timestamp = oldTimestamp;
+                                    oldBooking.type = oldType;
+                                }
+                            });
+                    } else {
+                        storage.openStore(OBJECT_STORE_NAME, function (store) {
+                            store
+                                .insert({
+                                    'type': type,
+                                    'timestamp': timestamp.unix()
+                                })
+                                .then(updateBookings);
+                        });
+                    }
+                });
+            });
         };
         
         $scope.saveManualBooking = function (evt) {
-            $translate([
-                'TOAST_UPDATE_BOOKING', 'UNDO'
-            ]).then(function (translations) {
-                var toast = $mdToast.simple(),
-                    manualBooking = $scope.manualBooking,
-                    time = manualBooking.time,
-                    type = manualBooking.type,
-                    timestamp = moment(manualBooking.date),
-                    old_timestamp,
-                    old_type;
-                
-                timestamp
-                    .hours(time.getHours())
-                    .minutes(time.getMinutes())
-                    .seconds(time.getSeconds())
-                    .milliseconds(time.getMilliseconds());
-                
-                $scope.hideManualBookingView();
-                
-                if (manualBooking.oldBooking) {
-                    old_timestamp = manualBooking.oldBooking.timestamp;
-                    old_type = manualBooking.oldBooking.type;
-                    
-                    manualBooking.oldBooking.timestamp = timestamp;
-                    manualBooking.oldBooking.type = type;
-
-                    toast
-                        .textContent(translations.TOAST_UPDATE_BOOKING)
-                        .action(translations.UNDO)
-                        .highlightAction(true)
-                        .highlightClass('md-primary')
-                        .hideDelay(TOAST_DELAY);
-
-                    $mdToast
-                        .show(toast)
-                        .then(function (response) {
-                            if (response === undefined) {
-                                storage.openStore(OBJECT_STORE_NAME, function (store) {
-                                    store.delete(old_timestamp.unix());
-
-                                    store
-                                        .insert({
-                                            'type': type,
-                                            'timestamp': timestamp.unix()
-                                        })
-                                        .then(updateBookings);
-                                });
-                            } else {
-                                manualBooking.oldBooking.timestamp = old_timestamp;
-                                manualBooking.oldBooking.type = old_type;
-                            }
-                        });
-                } else {
-                    storage.openStore(OBJECT_STORE_NAME, function (store) {
-                        store
-                            .insert({
-                                'type': type,
-                                'timestamp': timestamp.unix()
-                            })
-                            .then(updateBookings);
-                    });
-                }
-            });
+            
         };
         
         $scope.navigator = navigator;

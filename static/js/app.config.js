@@ -20,6 +20,13 @@
                             $timeout(function () {
                                 element[0].focus();
                                 element[0].click();
+                                
+                                try {
+                                    element[0].setSelectionRange(0,
+                                        element[0].value.length);
+                                } catch (e) {
+                                    element[0].select();
+                                }
                             });
                         }
                     });
