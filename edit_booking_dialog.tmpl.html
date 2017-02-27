@@ -16,8 +16,9 @@
             </div>
         </md-toolbar>
         <md-dialog-content>
-            <div layout="row" flex="flex">
-                <md-input-container>
+            <div layout="row"
+                 flex="flex">
+                <md-input-container flex="100">
                     <label>
                         {{ 'LABEL_BOOKING_DATE' | translate }}
                     </label>
@@ -32,8 +33,10 @@
                     </div>
                 </md-input-container>
             </div>
-            <div layout="row" flex="flex">
-                <md-input-container class="my-input-container">
+            <div layout="row"
+                 flex="flex">
+                <md-input-container class="my-input-container"
+                                    flex="100">
                     <label>
                         {{ 'LABEL_BOOKING_TIME' | translate }}
                         ({{ 'FORMAT_TIME' | translate}})
@@ -59,8 +62,10 @@
                     </div>
                 </md-input-container>
             </div>
-            <div layout="row" flex="flex">
-                <md-input-container class="md-icon-float my-input-container" flex="100">
+            <div layout="row"
+                 flex="flex">
+                <md-input-container class="md-icon-float my-input-container"
+                                    flex="100">
                     <label>
                         {{ 'LABEL_BOOKING_TYPE' | translate }}
                     </label>
