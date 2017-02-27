@@ -727,6 +727,10 @@ detectIDB(function (idb_capability) {
                 $scope.focusTime = function () {
                     $scope.timeFocused = true;
                 };
+                $scope.typeFocused = false;
+                $scope.focusType = function () {
+                    $scope.typeFocused = true;
+                };
             });
         }
         
@@ -772,7 +776,7 @@ detectIDB(function (idb_capability) {
                         .minutes(time.getMinutes())
                         .seconds(time.getSeconds())
                         .milliseconds(time.getMilliseconds());
-                    console.log(answer);
+                    
                     if (answer.isOld === true) {
                         oldTimestamp = oldBooking.timestamp;
                         oldType = oldBooking.type;

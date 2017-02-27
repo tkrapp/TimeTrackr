@@ -25,7 +25,11 @@
                                     element[0].setSelectionRange(0,
                                         element[0].value.length);
                                 } catch (e) {
-                                    element[0].select();
+                                    try {
+                                        element[0].select();
+                                    } catch (e) {
+                                        // element does not support selection
+                                    }
                                 }
                             });
                         }

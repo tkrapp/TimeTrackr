@@ -63,13 +63,13 @@
                         {{ 'LABEL_BOOKING_TYPE' | translate }}
                     </label>
                     <md-button class="md-icon-button"
-                               ng-click="manualBooking.focusType=true">
+                               ng-click="focusType()">
                         <md-icon md-svg-icon="static/icons/nature_gry.svg"
                                  aria-hidden="true"></md-icon>
                     </md-button>
                     <md-select name="typeField"
                                ng-model="type"
-                               focus-me="focusType"
+                               focus-me="typeFocused"
                                required="required">
                         <md-option ng-repeat="type in availableTypes"
                                    ng-value="type.value">
