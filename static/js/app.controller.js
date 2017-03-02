@@ -244,7 +244,7 @@ detectIDB(function (idb_capability) {
             dailyWorkingTime: 7.6,
             maxDailyWorkingTime: 10,
             dailyRestPeriod: 11,
-            pointsInTime: {},
+            pointsInTime: {}
         };
         
         function saveConfig() {
@@ -285,90 +285,7 @@ detectIDB(function (idb_capability) {
             });
         }
         
-        $scope.$watch('config', saveConfig, true);
-        $scope.setConfigDailyWorkingTime = function (evt) {
-            $translate([
-                'DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL'
-            ]).then(function (translations) {
-                $mdDialog.show({
-                    locals: {
-                        inputData: {
-                            value: $scope.config.dailyWorkingTime,
-                            title: translations.DAILY_WORKINGTIME,
-                            placeholder: translations.DAILY_WORKINGTIME_PLACEHOLDER,
-                            ariaLabel: translations.DAILY_WORKINGTIME,
-                            ok: translations.OK,
-                            cancel: translations.CANCEL
-                        }
-                    },
-                    controller: NumberInputController,
-                    templateUrl: 'number_input_dialog.tmpl.html',
-                    parent: angular.element(document.body),
-                    targetEvent: evt,
-                    clickOutsideToClose:true
-                })
-                .then(function(answer) {
-                    $scope.config.dailyWorkingTime = parseFloat(answer);
-                });
-            });
-        };
-        
-        $scope.setConfigMaxDailyWorkingTime = function (evt) {
-            $translate([
-                'MAX_DAILY_WORKINGTIME', 'MAX_DAILY_WORKINGTIME_PLACEHOLDER', 'OK',
-                'CANCEL'
-            ]).then(function (translations) {
-                $mdDialog.show({
-                    locals: {
-                        inputData: {
-                            value: $scope.config.maxDailyWorkingTime,
-                            title: translations.MAX_DAILY_WORKINGTIME,
-                            placeholder: translations.MAX_DAILY_WORKINGTIME_PLACEHOLDER,
-                            ariaLabel: translations.MAX_DAILY_WORKINGTIME,
-                            ok: translations.OK,
-                            cancel: translations.CANCEL
-                        }
-                    },
-                    controller: NumberInputController,
-                    templateUrl: 'number_input_dialog.tmpl.html',
-                    parent: angular.element(document.body),
-                    targetEvent: evt,
-                    clickOutsideToClose:true
-                })
-                .then(function(answer) {
-                    $scope.config.maxDailyWorkingTime = parseFloat(answer);
-                });
-            });
-        };
-        
-        $scope.setConfigDailyRestPeriod = function (evt) {
-            $translate([
-                'DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER', 'OK', 'CANCEL'
-            ]).then(function (translations) {
-                $mdDialog.show({
-                    locals: {
-                        inputData: {
-                            value: $scope.config.dailyRestPeriod,
-                            title: translations.DAILY_RESTPERIOD,
-                            placeholder: translations.DAILY_RESTPERIOD_PLACEHOLDER,
-                            ariaLabel: translations.DAILY_RESTPERIOD,
-                            ok: translations.OK,
-                            cancel: translations.CANCEL
-                        }
-                    },
-                    controller: NumberInputController,
-                    templateUrl: 'number_input_dialog.tmpl.html',
-                    parent: angular.element(document.body),
-                    targetEvent: evt,
-                    clickOutsideToClose:true
-                })
-                .then(function(answer) {
-                    $scope.config.dailyRestPeriod = parseFloat(answer);
-                });
-            });
-        };
-        
-        function NumberInputController ($scope, $mdDialog, inputData) {
+        function NumberInputController($scope, $mdDialog, inputData) {
             $scope.hide = $mdDialog.hide;
             $scope.close = $mdDialog.cancel;
             $scope.answer = function () {
@@ -384,81 +301,85 @@ detectIDB(function (idb_capability) {
             $scope.step = inputData.step || 'any';
         }
         
-        $scope.showPointInTimeDialog = function(ev) {
-            $mdDialog.show({
-                locals: {
-                    inputData: {
-                        type: 'after',
-                        value: undefined,
-                        index: undefined,
-                        title: undefined,
-                    }
-                },
-                controller: PointInTimeController,
-                templateUrl: 'point_in_time_dialog.tmpl.html',
-                parent: angular.element(document.body),
-                targetEvent: ev,
-                clickOutsideToClose:true,
-                fullscreen: true
-            })
-            .then(function(answer) {
-                function filterNotUndefined (value) {
-                    return value !== undefined;
-                };
-                
-                var pointsInTime = $scope.config.pointsInTime,
-                    pointInTime,
-                    idx;
-                
-                if (answer.title === undefined || answer.type === undefined ||
-                    answer.value === undefined) {
-                    return;
-                } else if (pointsInTime[answer.title] !== undefined) {
-                    $translate([
-                        'DIALOG_TITLE_CONFIRM_OVERWRITE_POINT_IN_TIME',
-                        'DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME',
-                        'DIALOG_CONFIRM_OVERWRITE_POINT_IN_TIME',
-                        'DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME'
-                    ]).then(function (translations) {
-                        var confirmOverwrite = $mdDialog.confirm();
-
-                        confirmOverwrite
-                            .title(translations.DIALOG_TITLE_CONFIRM_OVERWRITE_POINT_IN_TIME)
-                            .textContent(translations.DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME)
-                            .ariaLabel(translations.DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME)
-                            .ok(translations.DIALOG_CONFIRM_OVERWRITE_POINT_IN_TIME)
-                            .cancel(translations.DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME);
-                        
-                        $mdDialog.show(confirmOverwrite).then(function (result) {
-                            pointsInTime[answer.title] = answer;
+        $scope.$watch('config', saveConfig, true);
+        $scope.setConfigDailyWorkingTime = function (evt) {
+            $translate(['DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK',
+                        'CANCEL'])
+                .then(function (translations) {
+                    $mdDialog.show({
+                        locals: {
+                            inputData: {
+                                value: $scope.config.dailyWorkingTime,
+                                title: translations.DAILY_WORKINGTIME,
+                                placeholder: translations.DAILY_WORKINGTIME_PLACEHOLDER,
+                                ariaLabel: translations.DAILY_WORKINGTIME,
+                                ok: translations.OK,
+                                cancel: translations.CANCEL
+                            }
+                        },
+                        controller: NumberInputController,
+                        templateUrl: 'number_input_dialog.tmpl.html',
+                        parent: angular.element(document.body),
+                        targetEvent: evt,
+                        clickOutsideToClose: true
+                    })
+                        .then(function (answer) {
+                            $scope.config.dailyWorkingTime = parseFloat(answer);
                         });
-                    });
-                    
-                    return;
-                }
-                
-                pointsInTime[answer.title] = answer;
-            });
+                });
         };
         
-        $scope.deletePointInTime = function (pointInTime) {
-            $translate([
-                'OK', 'CANCEL', 'DIALOG_TITLE_DELETE_POINT_IN_TIME',
-                'DIALOG_CONTENT_DELETE_POINT_IN_TIME'
-            ]).then(function (translations) {
-                var confirmDeletion = $mdDialog.confirm();
-                
-                confirmDeletion
-                    .title(translations.DIALOG_TITLE_DELETE_POINT_IN_TIME)
-                    .textContent(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
-                    .ariaLabel(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
-                    .ok(translations.OK)
-                    .cancel(translations.CANCEL);
-                
-                $mdDialog.show(confirmDeletion).then(function (result) {
-                    delete $scope.config.pointsInTime[pointInTime.title];
+        $scope.setConfigMaxDailyWorkingTime = function (evt) {
+            $translate(['MAX_DAILY_WORKINGTIME', 'MAX_DAILY_WORKINGTIME_PLACEHOLDER',
+                        'OK', 'CANCEL'])
+                .then(function (translations) {
+                    $mdDialog.show({
+                        locals: {
+                            inputData: {
+                                value: $scope.config.maxDailyWorkingTime,
+                                title: translations.MAX_DAILY_WORKINGTIME,
+                                placeholder: translations.MAX_DAILY_WORKINGTIME_PLACEHOLDER,
+                                ariaLabel: translations.MAX_DAILY_WORKINGTIME,
+                                ok: translations.OK,
+                                cancel: translations.CANCEL
+                            }
+                        },
+                        controller: NumberInputController,
+                        templateUrl: 'number_input_dialog.tmpl.html',
+                        parent: angular.element(document.body),
+                        targetEvent: evt,
+                        clickOutsideToClose: true
+                    })
+                        .then(function (answer) {
+                            $scope.config.maxDailyWorkingTime = parseFloat(answer);
+                        });
                 });
-            });
+        };
+        
+        $scope.setConfigDailyRestPeriod = function (evt) {
+            $translate(['DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER', 'OK', 'CANCEL'])
+                .then(function (translations) {
+                    $mdDialog.show({
+                        locals: {
+                            inputData: {
+                                value: $scope.config.dailyRestPeriod,
+                                title: translations.DAILY_RESTPERIOD,
+                                placeholder: translations.DAILY_RESTPERIOD_PLACEHOLDER,
+                                ariaLabel: translations.DAILY_RESTPERIOD,
+                                ok: translations.OK,
+                                cancel: translations.CANCEL
+                            }
+                        },
+                        controller: NumberInputController,
+                        templateUrl: 'number_input_dialog.tmpl.html',
+                        parent: angular.element(document.body),
+                        targetEvent: evt,
+                        clickOutsideToClose: true
+                    })
+                        .then(function (answer) {
+                            $scope.config.dailyRestPeriod = parseFloat(answer);
+                        });
+                });
         };
         
         function PointInTimeController($scope, $mdDialog, inputData) {
@@ -474,12 +395,12 @@ detectIDB(function (idb_capability) {
                 var value;
                 
                 switch ($scope.type) {
-                    case $scope.valueAfter:
-                        value = $scope.hours;
-                        break;
-                    
-                    default:
-                        value = $scope.timestamp;
+                case $scope.valueAfter:
+                    value = $scope.hours;
+                    break;
+
+                default:
+                    value = $scope.timestamp;
                 }
                 
                 $mdDialog.hide({
@@ -506,6 +427,82 @@ detectIDB(function (idb_capability) {
             $scope.hours = undefined;
             $scope.timestamp = undefined;
         }
+        
+        $scope.showPointInTimeDialog = function (ev) {
+            $mdDialog.show({
+                locals: {
+                    inputData: {
+                        type: 'after',
+                        value: undefined,
+                        index: undefined,
+                        title: undefined
+                    }
+                },
+                controller: PointInTimeController,
+                templateUrl: 'point_in_time_dialog.tmpl.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: true,
+                fullscreen: true
+            })
+                .then(function (answer) {
+                    function filterNotUndefined(value) {
+                        return value !== undefined;
+                    }
+
+                    var pointsInTime = $scope.config.pointsInTime,
+                        pointInTime,
+                        idx;
+
+                    if (answer.title === undefined || answer.type === undefined ||
+                            answer.value === undefined) {
+                        return;
+                    } else if (pointsInTime[answer.title] !== undefined) {
+                        $translate(['DIALOG_TITLE_CONFIRM_OVERWRITE_POINT_IN_TIME',
+                                    'DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME',
+                                    'DIALOG_CONFIRM_OVERWRITE_POINT_IN_TIME',
+                                    'DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME'])
+                            .then(function (translations) {
+                                var confirmOverwrite = $mdDialog.confirm();
+
+                                confirmOverwrite
+                                    .title(translations.DIALOG_TITLE_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                                    .textContent(translations.DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                                    .ariaLabel(translations.DIALOG_CONTENT_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                                    .ok(translations.DIALOG_CONFIRM_OVERWRITE_POINT_IN_TIME)
+                                    .cancel(translations.DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME);
+
+                                $mdDialog.show(confirmOverwrite).then(function (result) {
+                                    pointsInTime[answer.title] = answer;
+                                });
+                            });
+
+                        return;
+                    }
+
+                    pointsInTime[answer.title] = answer;
+                });
+        };
+        
+        $scope.deletePointInTime = function (pointInTime) {
+            $translate([
+                'OK', 'CANCEL', 'DIALOG_TITLE_DELETE_POINT_IN_TIME',
+                'DIALOG_CONTENT_DELETE_POINT_IN_TIME'
+            ]).then(function (translations) {
+                var confirmDeletion = $mdDialog.confirm();
+                
+                confirmDeletion
+                    .title(translations.DIALOG_TITLE_DELETE_POINT_IN_TIME)
+                    .textContent(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
+                    .ariaLabel(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
+                    .ok(translations.OK)
+                    .cancel(translations.CANCEL);
+                
+                $mdDialog.show(confirmDeletion).then(function (result) {
+                    delete $scope.config.pointsInTime[pointInTime.title];
+                });
+            });
+        };
         
         function enhanceBooking(booking) {
             booking.timestamp = moment.unix(booking.timestamp);
@@ -636,10 +633,11 @@ detectIDB(function (idb_capability) {
         };
         
         $scope.deleteAllBookings = function (evt) {
-            $translate([
-                'TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL',
-                'DIALOG_CONTENT_DELETE_ALL', 'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS',
-                'DIALOG_CONFIRM_DELETE_ALL', 'DIALOG_CANCEL_DELETE_ALL', 'UNDO'])
+            $translate(['TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL',
+                        'DIALOG_CONTENT_DELETE_ALL',
+                        'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS',
+                        'DIALOG_CONFIRM_DELETE_ALL',
+                        'DIALOG_CANCEL_DELETE_ALL', 'UNDO'])
                 .then(function (translations) {
                     var confirm = $mdDialog.confirm();
 
@@ -695,43 +693,42 @@ detectIDB(function (idb_capability) {
             return today;
         }
         
-        function ManualBookingController ($scope, $mdDialog, inputData) {
-            $translate([
-                'BOOKING_COMING', 'BOOKING_LEAVING'
-            ]).then(function (translations) {
-                $scope.hide = $mdDialog.hide;
-                $scope.close = $mdDialog.cancel;
-                $scope.answer = function () {
-                    $mdDialog.hide({
-                        isOld: inputData.isOld,
-                        type: $scope.type,
-                        date: $scope.date,
-                        time: $scope.time
-                    });
-                };
+        function ManualBookingController($scope, $mdDialog, inputData) {
+            $translate(['BOOKING_COMING', 'BOOKING_LEAVING'])
+                .then(function (translations) {
+                    $scope.hide = $mdDialog.hide;
+                    $scope.close = $mdDialog.cancel;
+                    $scope.answer = function () {
+                        $mdDialog.hide({
+                            isOld: inputData.isOld,
+                            type: $scope.type,
+                            date: $scope.date,
+                            time: $scope.time
+                        });
+                    };
 
-                $scope.availableTypes = [
-                    {
-                        value: BOOKING_COMING,
-                        html: translations.BOOKING_COMING
-                    },
-                    {
-                        value: BOOKING_LEAVING,
-                        html: translations.BOOKING_LEAVING
-                    }
-                ];
-                $scope.type = inputData.type;
-                $scope.time = inputData.time;
-                $scope.date = inputData.date;
-                $scope.timeFocused = false;
-                $scope.focusTime = function () {
-                    $scope.timeFocused = true;
-                };
-                $scope.typeFocused = false;
-                $scope.focusType = function () {
-                    $scope.typeFocused = true;
-                };
-            });
+                    $scope.availableTypes = [
+                        {
+                            value: BOOKING_COMING,
+                            html: translations.BOOKING_COMING
+                        },
+                        {
+                            value: BOOKING_LEAVING,
+                            html: translations.BOOKING_LEAVING
+                        }
+                    ];
+                    $scope.type = inputData.type;
+                    $scope.time = inputData.time;
+                    $scope.date = inputData.date;
+                    $scope.timeFocused = false;
+                    $scope.focusTime = function () {
+                        $scope.timeFocused = true;
+                    };
+                    $scope.typeFocused = false;
+                    $scope.focusType = function () {
+                        $scope.typeFocused = true;
+                    };
+                });
         }
         
         $scope.showManualBookingView = function (evt, booking) {
@@ -760,70 +757,70 @@ detectIDB(function (idb_capability) {
                 clickOutsideToClose: true,
                 fullscreen: true
             })
-            .then(function(answer) {
-                $translate([
-                    'TOAST_UPDATE_BOOKING', 'UNDO'
-                ]).then(function (translations) {
-                    var toast = $mdToast.simple(),
-                        time = answer.time,
-                        type = answer.type,
-                        timestamp = moment(answer.date),
-                        oldTimestamp,
-                        oldType;
+                .then(function (answer) {
+                    $translate([
+                        'TOAST_UPDATE_BOOKING', 'UNDO'
+                    ]).then(function (translations) {
+                        var toast = $mdToast.simple(),
+                            time = answer.time,
+                            type = answer.type,
+                            timestamp = moment(answer.date),
+                            oldTimestamp,
+                            oldType;
 
-                    timestamp
-                        .hours(time.getHours())
-                        .minutes(time.getMinutes())
-                        .seconds(time.getSeconds())
-                        .milliseconds(time.getMilliseconds());
-                    
-                    if (answer.isOld === true) {
-                        oldTimestamp = oldBooking.timestamp;
-                        oldType = oldBooking.type;
+                        timestamp
+                            .hours(time.getHours())
+                            .minutes(time.getMinutes())
+                            .seconds(time.getSeconds())
+                            .milliseconds(time.getMilliseconds());
 
-                        oldBooking.timestamp = timestamp;
-                        oldBooking.type = type;
+                        if (answer.isOld === true) {
+                            oldTimestamp = oldBooking.timestamp;
+                            oldType = oldBooking.type;
 
-                        toast
-                            .textContent(translations.TOAST_UPDATE_BOOKING)
-                            .action(translations.UNDO)
-                            .highlightAction(true)
-                            .highlightClass('md-primary')
-                            .hideDelay(TOAST_DELAY);
+                            oldBooking.timestamp = timestamp;
+                            oldBooking.type = type;
 
-                        $mdToast
-                            .show(toast)
-                            .then(function (response) {
-                                if (response === undefined) {
-                                    storage.openStore(OBJECT_STORE_NAME, function (store) {
-                                        store
-                                            .delete(oldTimestamp.unix())
-                                            .then(function() {
-                                                store
-                                                    .insert({
-                                                        'type': type,
-                                                        'timestamp': timestamp.unix()
-                                                    })
-                                                    .then(updateBookings);
-                                            });
-                                    });
-                                } else {
-                                    oldBooking.timestamp = oldTimestamp;
-                                    oldBooking.type = oldType;
-                                }
+                            toast
+                                .textContent(translations.TOAST_UPDATE_BOOKING)
+                                .action(translations.UNDO)
+                                .highlightAction(true)
+                                .highlightClass('md-primary')
+                                .hideDelay(TOAST_DELAY);
+
+                            $mdToast
+                                .show(toast)
+                                .then(function (response) {
+                                    if (response === undefined) {
+                                        storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                            store
+                                                .delete(oldTimestamp.unix())
+                                                .then(function () {
+                                                    store
+                                                        .insert({
+                                                            'type': type,
+                                                            'timestamp': timestamp.unix()
+                                                        })
+                                                        .then(updateBookings);
+                                                });
+                                        });
+                                    } else {
+                                        oldBooking.timestamp = oldTimestamp;
+                                        oldBooking.type = oldType;
+                                    }
+                                });
+                        } else {
+                            storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                store
+                                    .insert({
+                                        'type': type,
+                                        'timestamp': timestamp.unix()
+                                    })
+                                    .then(updateBookings);
                             });
-                    } else {
-                        storage.openStore(OBJECT_STORE_NAME, function (store) {
-                            store
-                                .insert({
-                                    'type': type,
-                                    'timestamp': timestamp.unix()
-                                })
-                                .then(updateBookings);
-                        });
-                    }
+                        }
+                    });
                 });
-            });
         };
         
         $scope.saveManualBooking = function (evt) {
@@ -874,7 +871,7 @@ detectIDB(function (idb_capability) {
 
         function getReadableDiff(milliseconds) {
             var seconds = milliseconds / 1000,
-                negativeValue= milliseconds < 0,
+                negativeValue = milliseconds < 0,
                 hours,
                 minutes,
                 remainder;
@@ -1093,8 +1090,12 @@ detectIDB(function (idb_capability) {
             return pairs;
         }
         
-        function sortBookingsAsc(booking_a, booking_b) {
-            return booking_a.timestamp - booking_b.timestamp;
+        function sortBookingsAsc(bookingA, bookingB) {
+            return bookingA.timestamp - bookingB.timestamp;
+        }
+        
+        function sortBookingsDesc(bookingA, bookingB) {
+            return bookingB.timestamp - bookingA.timestamp;
         }
         
         function gteToday(booking) {
@@ -1102,6 +1103,8 @@ detectIDB(function (idb_capability) {
         }
         
         $scope.timeTable = {
+            startTime: '---',
+            endTime: '---',
             timePairs: [],
             timeWorking: 0,
             timeOnBreak: 0,
@@ -1112,11 +1115,11 @@ detectIDB(function (idb_capability) {
             }
         };
         
-        function sortByValue (pointInTimeA, pointInTimeB) {
+        function sortByValue(pointInTimeA, pointInTimeB) {
             return pointInTimeA.value - pointInTimeB.value;
         }
         
-        function getPointsAfter () {
+        function getPointsAfter() {
             var pointsInTime = $scope.config.pointsInTime,
                 keys = Object.keys(pointsInTime),
                 pointsAfter = [
@@ -1137,14 +1140,12 @@ detectIDB(function (idb_capability) {
             for (idx = 0; idx < keys.length; idx += 1) {
                 pointInTime = pointsInTime[keys[idx]];
                 
-                if (pointInTime.type !== 'after') {
-                    continue;
+                if (pointInTime.type === 'after') {
+                    pointsAfter.push({
+                        value: toMicroTime(pointInTime.value),
+                        title: pointInTime.title
+                    });
                 }
-                
-                pointsAfter.push({
-                    value: toMicroTime(pointInTime.value),
-                    title: pointInTime.title
-                });
             }
             
             pointsAfter.sort(sortByValue);
@@ -1152,7 +1153,7 @@ detectIDB(function (idb_capability) {
             return pointsAfter;
         }
         
-        function getPointsAt () {
+        function getPointsAt() {
             var pointsInTime = $scope.config.pointsInTime,
                 keys = Object.keys(pointsInTime),
                 pointsAt = [],
@@ -1162,14 +1163,12 @@ detectIDB(function (idb_capability) {
             for (idx = 0; idx < keys.length; idx += 1) {
                 pointInTime = pointsInTime[keys[idx]];
                 
-                if (pointInTime.type !== 'at') {
-                    continue;
+                if (pointInTime.type === 'at') {
+                    pointsAt.push({
+                        value: moment(pointInTime.value),
+                        title: pointInTime.title
+                    });
                 }
-                
-                pointsAt.push({
-                    value: moment(pointInTime.value),
-                    title: pointInTime.title
-                });
             }
             
             pointsAt.sort(sortByValue);
@@ -1177,113 +1176,83 @@ detectIDB(function (idb_capability) {
             return pointsAt;
         }
         
-        $scope.updateTimeTable = function () {
-            var error = false,
-                timeseries = $scope.bookings.slice(0).filter(gteToday),
-                time_on_break = 0,
-                time_working = 0,
-                time_at_home = 0,
-                pointsAfter = getPointsAfter(),
-                pointAfterIdx = 0,
-                pointAfter = pointsAfter[pointAfterIdx],
+        function getLastWorkingDay(bookings, dailyRestPeriod) {
+            var lenBookings = bookings.length,
+                restPeriodInMicroseconds = toMicroTime(dailyRestPeriod),
+                prevBooking,
+                curBooking,
+                timeDiff,
+                idx;
+            
+            bookings = bookings.slice(); // Copy bookings for reversing
+            bookings.sort(sortBookingsDesc);
+            
+            if (lenBookings <= 1) {
+                return bookings;
+            } else {
+                prevBooking = bookings[0];
+
+                for (idx = 1; idx >= 0; idx += 1) {
+                    curBooking = bookings[idx];
+                    timeDiff = (prevBooking.timestamp - curBooking.timestamp);
+                    
+                    if (prevBooking.type === BOOKING_COMING &&
+                            curBooking.type === BOOKING_LEAVING &&
+                            timeDiff >= restPeriodInMicroseconds) {
+                        break; // Found two bookings where daily rest period is exceeded
+                               // and the user was not working
+                    }
+                    
+                    prevBooking = curBooking;
+                }
+                
+                return bookings.slice(0, idx);
+            }
+        }
+        
+        function calcSvgPosititions(pair, idx) {
+            pair.svg = {
+                x: SVG_PADDING_H,
+                y1: SVG_PADDING_V +
+                    (idx * SVG_LINE_HEIGHT),
+                y2: SVG_PADDING_V +
+                    ((idx + 1) * SVG_LINE_HEIGHT),
+                point_text_x: SVG_PADDING_H + SVG_TEXT_L,
+                point_text_y1: SVG_PADDING_V +
+                    (idx * SVG_LINE_HEIGHT) + SVG_TEXT_V_OFFSET,
+                point_text_y2: SVG_PADDING_V +
+                    ((idx + 1) * SVG_LINE_HEIGHT) + SVG_TEXT_V_OFFSET,
+                type_text_x: SVG_PADDING_H + SVG_TEXT_L,
+                type_text_y: SVG_PADDING_V +
+                    (idx * SVG_LINE_HEIGHT) + SVG_TYPE_TEXT_V_OFFSET
+            };
+        }
+        
+        function insertSpecialPointsAtTimestamp(pairs) {
+            // Insert special points of time which should occur after a given
+            // timestamp.
+            var lenPairs = pairs.length,
                 pointsAt = getPointsAt(),
-                check_result,
-                idx_pair,
+                idx,
                 pair,
-                pairs,
-                prev_ts,
-                ts,
-                valid_ts,
-                time_diff,
-                len_pairs,
-                new_pair,
-                last_pair,
                 pointAtIdx,
                 pointAt,
                 formattedValue,
                 formattedStart,
-                formattedEnd;
+                formattedEnd,
+                newPair;
             
-            timeseries.sort(sortBookingsAsc);
-            check_result = checkTimeSeriesValidity(timeseries);
-            valid_ts = check_result === -1;
-            
-            if (valid_ts === true) {
-                pairs = calcTimes(timeseries);
-                last_pair = pairs[pairs.length - 1];
-                
-                // add pair for daily rest period
-                pairs.push({
-                    start: last_pair.end.clone(),
-                    end: last_pair.end.clone()
-                        .add(toMicroTime($scope.config.dailyRestPeriod)),
-                    type: TYPE_AT_HOME,
-                    synthetic: BOOKING_SYNTHETIC
-                });
-                
-                // Insert special points of time which should occur after a given
-                // amount of hours.
-                // Do also calculate time_working, time_at_home and time_on_break.
-                len_pairs = pairs.length;
-                for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
-                    pair = pairs[idx_pair];
-                    time_diff = pair.end.diff(pair.start);
-                    
-                    if (pair.type === TYPE_WORKING) {
-                        if (pointAfter &&
-                                (time_working + time_diff) > pointAfter.value) {
-                            len_pairs += 1;
-                            
-                            new_pair = {
-                                'start': pair.start.clone(),
-                                'end': pair.start.clone()
-                                    .add(pointAfter.value - time_working),
-                                'type': TYPE_WORKING,
-                                'synthetic': BOOKING_SYNTHETIC,
-                                'endTitle': pointAfter.title,
-                                'endClass': pointAfter.class
-                            };
-                            
-                            pair.start = new_pair.end.clone();
-                            pairs.splice(idx_pair, 0, new_pair);
-                            
-                            pair = new_pair;
-                            
-                            pointAfterIdx += 1;
-                            pointAfter = pointsAfter[pointAfterIdx];
-                        } else if (pointAfter &&
-                            (time_working + time_diff) === pointAfter.value) {
-                            pair.endTitle = pointAfter.title;
-                            pair.endClass = pointAfter.class;
-                        }
-                        
-                        time_diff = pair.end.diff(pair.start);
-                        time_working += time_diff;
-                    } else if (pair.type === TYPE_ON_BREAK) {
-                        time_on_break += pair.end.diff(pair.start);
-                    } else {
-                        time_at_home += pair.end.diff(pair.start);
-                    }
-                    
-                    pair.duration = getReadableDiff(pair.end - pair.start);
-                }
-                
-                // Insert special points of time which should occur after a given
-                // timestamp.
-                for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
-                    pair = pairs[idx_pair];
-                    
-                    if (pair.type !== TYPE_WORKING && pair.type !== TYPE_ON_BREAK) {
-                        continue;
-                    }
-                    
+            for (idx = 0; idx < lenPairs; idx += 1) {
+                pair = pairs[idx];
+
+                if (pair.type === TYPE_WORKING || pair.type === TYPE_ON_BREAK) {
                     for (pointAtIdx = 0; pointAtIdx < pointsAt.length; pointAtIdx += 1) {
                         pointAt = pointsAt[pointAtIdx];
                         formattedValue = pointAt.value.format('HH:mm');
                         formattedStart = pair.start.format('HH:mm');
                         formattedEnd = pair.end.format('HH:mm');
-                        
-                        if (idx_pair === 0 && formattedStart === formattedValue) {
+
+                        if (idx === 0 && formattedStart === formattedValue) {
                             pair.startTitle = pointAt.title;
                             pair.startclass = pointAt.class;
                             pointAtIdx += 1;
@@ -1292,10 +1261,10 @@ detectIDB(function (idb_capability) {
                             pair.endclass = pointAt.class;
                             pointAtIdx += 1;
                         } else if (formattedStart < formattedValue &&
-                            formattedValue < formattedEnd) {
-                            len_pairs += 1;
-                            
-                            new_pair = {
+                                formattedValue < formattedEnd) {
+                            lenPairs += 1;
+
+                            newPair = {
                                 'start': pair.start.clone(),
                                 'end': pointAt.value.clone().date(pair.start.date())
                                     .month(pair.start.month()).year(pair.start.year()),
@@ -1305,64 +1274,173 @@ detectIDB(function (idb_capability) {
                                 'endClass': pointAt.class
                             };
 
-                            pair.start = new_pair.end.clone();
-                            pairs.splice(idx_pair, 0, new_pair);
+                            pair.start = newPair.end.clone();
+                            pairs.splice(idx, 0, newPair);
 
-                            pair = new_pair;
+                            pair = newPair;
 
                             pointAtIdx += 1;
                         }
                     }
-                    
+
                     pair.duration = getReadableDiff(pair.end - pair.start);
                 }
-                
-                for (idx_pair = 0; idx_pair < len_pairs; idx_pair += 1) {
-                    pair = pairs[idx_pair];
-                    pair.svg = {
-                        x: SVG_PADDING_H,
-                        y1: SVG_PADDING_V +
-                            (idx_pair * SVG_LINE_HEIGHT),
-                        y2: SVG_PADDING_V +
-                            ((idx_pair + 1) * SVG_LINE_HEIGHT),
-                        point_text_x: SVG_PADDING_H + SVG_TEXT_L,
-                        point_text_y1: SVG_PADDING_V +
-                            (idx_pair * SVG_LINE_HEIGHT) + SVG_TEXT_V_OFFSET,
-                        point_text_y2: SVG_PADDING_V +
-                            ((idx_pair + 1) * SVG_LINE_HEIGHT) + SVG_TEXT_V_OFFSET,
-                        type_text_x: SVG_PADDING_H + SVG_TEXT_L,
-                        type_text_y: SVG_PADDING_V +
-                            (idx_pair * SVG_LINE_HEIGHT) + SVG_TYPE_TEXT_V_OFFSET
-                    };
-                }
-                
-                $scope.timeTable.timeWorking = getReadableDiff(time_working);
-                $scope.timeTable.timeOnBreak = getReadableDiff(time_on_break);
-                $scope.timeTable.timeAtHome = getReadableDiff(time_at_home);
-                $scope.timeTable.timePairs = pairs;
-                $scope.timeTable.overtime = getReadableDiff(time_working -
-                    toMicroTime($scope.config.dailyWorkingTime));
-                $scope.timeTable.error = error;
-                $scope.timeTable.svg.height = pair.svg.y2 + SVG_PADDING_V;
-            } else {
-                prev_ts = timeseries[check_result - 1];
-                ts = timeseries[check_result];
-                
-                if (prev_ts) {
-                    error = 'Invalid timeseries. Check positions ' +
-                        (check_result - 1) + ' and ' + check_result;
-                } else {
-                    error = 'Invalid timeseries. Check first element.';
-                }
-                
-                $scope.timeTable.timeWorking = 0;
-                $scope.timeTable.timeOnBreak = 0;
-                $scope.timeTable.overtime = 0;
-                $scope.timeTable.timePairs = [];
-                $scope.timeTable.error = error;
             }
-        };
-        //$scope.$watch('bookings', $scope.updateTimeTable);
+        }
+        
+        function insertSpecialPointsAfterAmountOfTime(pairs) {
+            // Insert special points of time which should occur after a given
+            // amount of hours.
+            // Do also calculate time_working, time_at_home and time_on_break.
+            var lenPairs = pairs.length,
+                pointsAfter = getPointsAfter(),
+                pair,
+                timeDiff,
+                timeWorking,
+                timeOnBreak,
+                timeAtHome,
+                pointAfter,
+                pointAfterIdx,
+                newPair,
+                idx;
+            
+            for (idx = 0; idx < lenPairs; idx += 1) {
+                pair = pairs[idx];
+                timeDiff = pair.end.diff(pair.start);
+
+                if (pair.type === TYPE_WORKING) {
+                    if (pointAfter &&
+                            (timeWorking + timeDiff) > pointAfter.value) {
+                        lenPairs += 1;
+
+                        newPair = {
+                            'start': pair.start.clone(),
+                            'end': pair.start.clone()
+                                .add(pointAfter.value - timeWorking),
+                            'type': TYPE_WORKING,
+                            'synthetic': BOOKING_SYNTHETIC,
+                            'endTitle': pointAfter.title,
+                            'endClass': pointAfter.class
+                        };
+
+                        pair.start = newPair.end.clone();
+                        pairs.splice(idx, 0, newPair);
+
+                        pair = newPair;
+
+                        pointAfterIdx += 1;
+                        pointAfter = pointsAfter[pointAfterIdx];
+                    } else if (pointAfter &&
+                            (timeWorking + timeDiff) === pointAfter.value) {
+                        pair.endTitle = pointAfter.title;
+                        pair.endClass = pointAfter.class;
+                    }
+
+                    timeDiff = pair.end.diff(pair.start);
+                    timeWorking += timeDiff;
+                } else if (pair.type === TYPE_ON_BREAK) {
+                    timeOnBreak += pair.end.diff(pair.start);
+                } else {
+                    timeAtHome += pair.end.diff(pair.start);
+                }
+
+                pair.duration = getReadableDiff(pair.end - pair.start);
+            }
+        }
+        
+        function filterTimePairsByType (timePairType) {
+            return function (timePair) {
+                return timePair.type === timePairType;
+            }
+        }
+        
+        function sumDurations (prevValue, timePair) {
+            if (Number.isInteger(prevValue) === false) {
+                prevValue = prevValue.end - prevValue.start;
+            }
+            
+            return prevValue + timePair.end - timePair.start;
+        }
+        
+        $translate(['LABEL_ERROR', 'INVALID_TS_CHECK_POS', 'INVALID_TS_CHECK_FIRST'])
+            .then(function (translations) {
+                $scope.updateTimeTable = function () {
+                    var error = false,
+                        timeseries = getLastWorkingDay($scope.bookings,
+                            $scope.config.dailyRestPeriod),
+                        timeOnBreak = 0,
+                        timeWorking = 0,
+                        timeAtHome = 0,
+                        ts,
+                        prevTs,
+                        validTs,
+                        pairs,
+                        lastPair,
+                        checkResult;
+                        /*pointsAfter = getPointsAfter(),
+                        */
+
+                    timeseries.sort(sortBookingsAsc);
+                    checkResult = checkTimeSeriesValidity(timeseries);
+                    validTs = checkResult === -1;
+
+                    if (validTs === true) {
+                        pairs = calcTimes(timeseries);
+                        lastPair = pairs[pairs.length - 1];
+
+                        // add pair for daily rest period
+                        pairs.push({
+                            start: lastPair.end.clone(),
+                            end: lastPair.end.clone()
+                                .add(toMicroTime($scope.config.dailyRestPeriod)),
+                            type: TYPE_AT_HOME,
+                            synthetic: BOOKING_SYNTHETIC
+                        });
+
+                        insertSpecialPointsAfterAmountOfTime(pairs);
+                        insertSpecialPointsAtTimestamp(pairs);
+                        pairs.forEach(calcSvgPosititions);
+                        
+                        timeOnBreak = pairs
+                            .filter(filterTimePairsByType(TYPE_ON_BREAK))
+                            .reduce(sumDurations);
+                        timeWorking = pairs
+                            .filter(filterTimePairsByType(TYPE_WORKING))
+                            .reduce(sumDurations);
+                        timeAtHome = pairs
+                            .filter(filterTimePairsByType(TYPE_AT_HOME))
+                            .reduce(sumDurations);
+                        
+                        $scope.timeTable.startTime = pairs[0].start;
+                        $scope.timeTable.endTime = pairs[pairs.length - 1].end;
+                        $scope.timeTable.timeWorking = getReadableDiff(timeWorking);
+                        $scope.timeTable.timeOnBreak = getReadableDiff(timeOnBreak);
+                        $scope.timeTable.timeAtHome = getReadableDiff(timeAtHome);
+                        $scope.timeTable.timePairs = pairs;
+                        $scope.timeTable.overtime = getReadableDiff(timeWorking -
+                            toMicroTime($scope.config.dailyWorkingTime));
+                        $scope.timeTable.error = error;
+                        $scope.timeTable.svg.height = pairs[pairs.length - 1].svg.y2 +
+                            SVG_PADDING_V;
+                    } else {
+                        prevTs = timeseries[checkResult - 1];
+                        ts = timeseries[checkResult];
+                        
+                        if (prevTs) {
+                            error = translations.INVALID_TS_CHECK_POS +
+                                [checkResult, checkResult - 1].join(translations.AND_WITH_SPACES) + '.';
+                        } else {
+                            error = translations.INVALID_TS_CHECK_FIRST;
+                        }
+                        
+                        $scope.timeTable.timeWorking = 0;
+                        $scope.timeTable.timeOnBreak = 0;
+                        $scope.timeTable.overtime = 0;
+                        $scope.timeTable.timePairs = [];
+                        $scope.timeTable.error = error;
+                    }
+                };
+            });
         
         (function () {
             updateBookings();
