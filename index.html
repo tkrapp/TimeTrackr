@@ -206,7 +206,7 @@
                                         </text>
                                         <text ng-attr-x="{{ timePair.svg.type_text_x * 3 }}"
                                               ng-attr-y="{{ timePair.svg.type_text_y }}">
-                                            {{ timePair.duration }}
+                                            {{ timePair.duration | readableTimeDelta }}
                                         </text>
                                         <!--<text ng-attr-x="{{ timePair.svg.type_text_x * 4 }}"
                                               ng-attr-y="{{ timePair.svg.type_text_y }}">
@@ -265,7 +265,8 @@
                                     <div class="md-list-item-text">
                                         <h3 translate="LABEL_OVERTIME"></h3>
                                         <p>
-                                            {{ timeTable.overtime }} {{ HOURS | translate }}
+                                            {{ (timeTable.overtime - timeTable.notTrackedBreak) | readableTimeDelta }}
+                                            {{ 'HOURS' | translate }}
                                         </p>
                                     </div>
                                 </md-list-item>
@@ -273,7 +274,12 @@
                                     <div class="md-list-item-text">
                                         <h3 translate="TYPE_WORKING"></h3>
                                         <p>
-                                            {{ timeTable.timeWorking }} {{ HOURS | translate }}
+                                            {{ timeTable.timeWorking | readableTimeDelta }}
+                                            <span ng-if="timeTable.notTrackedBreak">
+                                            - {{ timeTable.notTrackedBreak | readableTimeDelta }}
+                                            = {{ (timeTable.timeWorking - timeTable.notTrackedBreak) | readableTimeDelta }}
+                                            </span>
+                                            {{ 'HOURS' | translate }}
                                         </p>
                                     </div>
                                 </md-list-item>
@@ -281,7 +287,21 @@
                                     <div class="md-list-item-text">
                                         <h3 translate="TYPE_ON_BREAK"></h3>
                                         <p>
-                                            {{ timeTable.timeOnBreak }} {{ HOURS | translate }}
+                                            {{ timeTable.timeOnBreak | readableTimeDelta }}
+                                            <span ng-if="timeTable.notTrackedBreak">
+                                            + {{ timeTable.notTrackedBreak | readableTimeDelta }}
+                                            = {{ (timeTable.timeOnBreak + timeTable.notTrackedBreak) | readableTimeDelta }}
+                                            </span>
+                                            {{ 'HOURS' | translate }}
+                                        </p>
+                                    </div>
+                                </md-list-item>
+                                <md-list-item class="md-2-line">
+                                    <div class="md-list-item-text">
+                                        <h3 translate="TYPE_BREAK_NOT_TRACKED"></h3>
+                                        <p>
+                                            {{ timeTable.notTrackedBreak | readableTimeDelta }}
+                                            {{ 'HOURS' | translate }}
                                         </p>
                                     </div>
                                 </md-list-item>
@@ -289,7 +309,8 @@
                                     <div class="md-list-item-text">
                                         <h3 translate="TYPE_AT_HOME"></h3>
                                         <p>
-                                            {{ timeTable.timeAtHome }} {{ HOURS | translate }}
+                                            {{ timeTable.timeAtHome | readableTimeDelta }}
+                                            {{ 'HOURS' | translate }}
                                         </p>
                                     </div>
                                 </md-list-item>

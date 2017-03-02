@@ -120,6 +120,8 @@
                         'On Break',
                     'TYPE_AT_HOME':
                         'Daily rest period',
+                    'TYPE_BREAK_NOT_TRACKED':
+                        'Not tracked break',
                     'SUBHEADER_MISC_SETTINGS':
                         'Miscellaneous',
                     'SUBHEADER_WORKINGTIME_SETTINGS':
@@ -285,6 +287,8 @@
                         'In Pause',
                     'TYPE_AT_HOME':
                         'Tägl. Ruhezeit',
+                    'TYPE_BREAK_NOT_TRACKED':
+                        'Nicht aufgezeichnete Pausenzeit',
                     'SUBHEADER_MISC_SETTINGS':
                         'Sonstiges',
                     'SUBHEADER_WORKINGTIME_SETTINGS':

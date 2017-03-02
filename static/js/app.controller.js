@@ -758,73 +758,68 @@ detectIDB(function (idb_capability) {
                 fullscreen: true
             })
                 .then(function (answer) {
-                    $translate([
-                        'TOAST_UPDATE_BOOKING', 'UNDO'
-                    ]).then(function (translations) {
-                        var toast = $mdToast.simple(),
-                            time = answer.time,
-                            type = answer.type,
-                            timestamp = moment(answer.date),
-                            oldTimestamp,
-                            oldType;
+                    $translate(['TOAST_UPDATE_BOOKING', 'UNDO'])
+                        .then(function (translations) {
+                            var toast = $mdToast.simple(),
+                                time = answer.time,
+                                type = answer.type,
+                                timestamp = moment(answer.date),
+                                oldTimestamp,
+                                oldType;
 
-                        timestamp
-                            .hours(time.getHours())
-                            .minutes(time.getMinutes())
-                            .seconds(time.getSeconds())
-                            .milliseconds(time.getMilliseconds());
+                            timestamp
+                                .hours(time.getHours())
+                                .minutes(time.getMinutes())
+                                .seconds(time.getSeconds())
+                                .milliseconds(time.getMilliseconds());
 
-                        if (answer.isOld === true) {
-                            oldTimestamp = oldBooking.timestamp;
-                            oldType = oldBooking.type;
+                            if (answer.isOld === true) {
+                                oldTimestamp = oldBooking.timestamp;
+                                oldType = oldBooking.type;
 
-                            oldBooking.timestamp = timestamp;
-                            oldBooking.type = type;
+                                oldBooking.timestamp = timestamp;
+                                oldBooking.type = type;
 
-                            toast
-                                .textContent(translations.TOAST_UPDATE_BOOKING)
-                                .action(translations.UNDO)
-                                .highlightAction(true)
-                                .highlightClass('md-primary')
-                                .hideDelay(TOAST_DELAY);
+                                toast
+                                    .textContent(translations.TOAST_UPDATE_BOOKING)
+                                    .action(translations.UNDO)
+                                    .highlightAction(true)
+                                    .highlightClass('md-primary')
+                                    .hideDelay(TOAST_DELAY);
 
-                            $mdToast
-                                .show(toast)
-                                .then(function (response) {
-                                    if (response === undefined) {
-                                        storage.openStore(OBJECT_STORE_NAME, function (store) {
-                                            store
-                                                .delete(oldTimestamp.unix())
-                                                .then(function () {
-                                                    store
-                                                        .insert({
-                                                            'type': type,
-                                                            'timestamp': timestamp.unix()
-                                                        })
-                                                        .then(updateBookings);
-                                                });
-                                        });
-                                    } else {
-                                        oldBooking.timestamp = oldTimestamp;
-                                        oldBooking.type = oldType;
-                                    }
+                                $mdToast
+                                    .show(toast)
+                                    .then(function (response) {
+                                        if (response === undefined) {
+                                            storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                                store
+                                                    .delete(oldTimestamp.unix())
+                                                    .then(function () {
+                                                        store
+                                                            .insert({
+                                                                'type': type,
+                                                                'timestamp': timestamp.unix()
+                                                            })
+                                                            .then(updateBookings);
+                                                    });
+                                            });
+                                        } else {
+                                            oldBooking.timestamp = oldTimestamp;
+                                            oldBooking.type = oldType;
+                                        }
+                                    });
+                            } else {
+                                storage.openStore(OBJECT_STORE_NAME, function (store) {
+                                    store
+                                        .insert({
+                                            'type': type,
+                                            'timestamp': timestamp.unix()
+                                        })
+                                        .then(updateBookings);
                                 });
-                        } else {
-                            storage.openStore(OBJECT_STORE_NAME, function (store) {
-                                store
-                                    .insert({
-                                        'type': type,
-                                        'timestamp': timestamp.unix()
-                                    })
-                                    .then(updateBookings);
-                            });
-                        }
-                    });
+                            }
+                        });
                 });
-        };
-        
-        $scope.saveManualBooking = function (evt) {
-            
         };
         
         $scope.navigator = navigator;
@@ -867,31 +862,6 @@ detectIDB(function (idb_capability) {
             }
 
             return -1;
-        }
-
-        function getReadableDiff(milliseconds) {
-            var seconds = milliseconds / 1000,
-                negativeValue = milliseconds < 0,
-                hours,
-                minutes,
-                remainder;
-            
-            if (negativeValue) {
-                seconds = Math.abs(seconds);
-            }
-            
-            hours = parseInt(seconds / 3600, 10);
-            remainder = seconds % 3600;
-            minutes = parseInt(remainder / 60, 10);
-            
-            if (hours < 10) {
-                hours = '0' + hours;
-            }
-            if (minutes < 10) {
-                minutes = '0' + minutes;
-            }
-
-            return (negativeValue ? '-' : '') + hours + ':' + minutes;
         }
 
         function sixHoursCheck(pair) {
@@ -1108,6 +1078,7 @@ detectIDB(function (idb_capability) {
             timePairs: [],
             timeWorking: 0,
             timeOnBreak: 0,
+            notTrackedBreak: 0,
             overtime: 0,
             error: false,
             svg: {
@@ -1283,7 +1254,7 @@ detectIDB(function (idb_capability) {
                         }
                     }
 
-                    pair.duration = getReadableDiff(pair.end - pair.start);
+                    pair.duration = pair.end - pair.start;
                 }
             }
         }
@@ -1344,22 +1315,22 @@ detectIDB(function (idb_capability) {
                     timeAtHome += pair.end.diff(pair.start);
                 }
 
-                pair.duration = getReadableDiff(pair.end - pair.start);
+                pair.duration = pair.end - pair.start;
             }
         }
         
-        function filterTimePairsByType (timePairType) {
+        function filterTimePairsByType(timePairType) {
             return function (timePair) {
                 return timePair.type === timePairType;
-            }
+            };
         }
         
-        function sumDurations (prevValue, timePair) {
+        function sumDurations(prevValue, timePair) {
             if (Number.isInteger(prevValue) === false) {
-                prevValue = prevValue.end - prevValue.start;
+                prevValue = prevValue.duration;
             }
             
-            return prevValue + timePair.end - timePair.start;
+            return prevValue + timePair.duration;
         }
         
         $translate(['LABEL_ERROR', 'INVALID_TS_CHECK_POS', 'INVALID_TS_CHECK_FIRST'])
@@ -1371,14 +1342,13 @@ detectIDB(function (idb_capability) {
                         timeOnBreak = 0,
                         timeWorking = 0,
                         timeAtHome = 0,
+                        notTrackedBreak = 0,
                         ts,
                         prevTs,
                         validTs,
                         pairs,
                         lastPair,
                         checkResult;
-                        /*pointsAfter = getPointsAfter(),
-                        */
 
                     timeseries.sort(sortBookingsAsc);
                     checkResult = checkTimeSeriesValidity(timeseries);
@@ -1403,22 +1373,33 @@ detectIDB(function (idb_capability) {
                         
                         timeOnBreak = pairs
                             .filter(filterTimePairsByType(TYPE_ON_BREAK))
-                            .reduce(sumDurations);
+                            .reduce(sumDurations, 0);
                         timeWorking = pairs
                             .filter(filterTimePairsByType(TYPE_WORKING))
-                            .reduce(sumDurations);
+                            .reduce(sumDurations, 0);
                         timeAtHome = pairs
                             .filter(filterTimePairsByType(TYPE_AT_HOME))
-                            .reduce(sumDurations);
+                            .reduce(sumDurations, 0);
+                        
+                        // Check if an additional break needs to be considered
+                        // since the current timeOnBreak is not sufficient
+                        if (timeWorking > SECOND_BREAK_AFTER) {
+                            notTrackedBreak = Math.min(FIRST_BREAK + SECOND_BREAK - timeOnBreak,
+                                timeWorking - SECOND_BREAK_AFTER);
+                        } else if (timeWorking > BREAK_AFTER) {
+                            notTrackedBreak = Math.min(FIRST_BREAK - timeOnBreak,
+                                timeWorking - BREAK_AFTER);
+                        }
                         
                         $scope.timeTable.startTime = pairs[0].start;
                         $scope.timeTable.endTime = pairs[pairs.length - 1].end;
-                        $scope.timeTable.timeWorking = getReadableDiff(timeWorking);
-                        $scope.timeTable.timeOnBreak = getReadableDiff(timeOnBreak);
-                        $scope.timeTable.timeAtHome = getReadableDiff(timeAtHome);
+                        $scope.timeTable.notTrackedBreak = notTrackedBreak;
+                        $scope.timeTable.timeWorking = timeWorking;
+                        $scope.timeTable.timeOnBreak = timeOnBreak;
+                        $scope.timeTable.timeAtHome = timeAtHome;
                         $scope.timeTable.timePairs = pairs;
-                        $scope.timeTable.overtime = getReadableDiff(timeWorking -
-                            toMicroTime($scope.config.dailyWorkingTime));
+                        $scope.timeTable.overtime = timeWorking -
+                            toMicroTime($scope.config.dailyWorkingTime);
                         $scope.timeTable.error = error;
                         $scope.timeTable.svg.height = pairs[pairs.length - 1].svg.y2 +
                             SVG_PADDING_V;
