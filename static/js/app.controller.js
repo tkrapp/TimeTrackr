@@ -1266,9 +1266,9 @@ detectIDB(function (idb_capability) {
                 pointsAfter = getPointsAfter(),
                 pointAfterIdx = 0,
                 pointAfter = pointsAfter[pointAfterIdx],
+                timeWorking = 0,
                 pair,
                 timeDiff,
-                timeWorking,
                 newPair,
                 idx;
             
