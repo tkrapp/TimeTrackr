@@ -1262,16 +1262,13 @@ detectIDB(function (idb_capability) {
         function insertSpecialPointsAfterAmountOfTime(pairs) {
             // Insert special points of time which should occur after a given
             // amount of hours.
-            // Do also calculate time_working, time_at_home and time_on_break.
             var lenPairs = pairs.length,
                 pointsAfter = getPointsAfter(),
+                pointAfterIdx = 0,
+                pointAfter = pointsAfter[pointAfterIdx],
                 pair,
                 timeDiff,
                 timeWorking,
-                timeOnBreak,
-                timeAtHome,
-                pointAfter,
-                pointAfterIdx,
                 newPair,
                 idx;
             
@@ -1309,10 +1306,6 @@ detectIDB(function (idb_capability) {
 
                     timeDiff = pair.end.diff(pair.start);
                     timeWorking += timeDiff;
-                } else if (pair.type === TYPE_ON_BREAK) {
-                    timeOnBreak += pair.end.diff(pair.start);
-                } else {
-                    timeAtHome += pair.end.diff(pair.start);
                 }
 
                 pair.duration = pair.end - pair.start;
