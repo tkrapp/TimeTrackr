@@ -63,6 +63,12 @@
                         'Title of the point in time',
                     'LABEL_OVERTIME':
                         'Overtime',
+                    'LABEL_STARTTIME':
+                        'Starting at',
+                    'LABEL_ENDTIME':
+                        'Ending at',
+                    'LABEL_ERROR':
+                        'Error',
                     'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS':
                         'Delete all tracked bookings',
                     'LABEL_DELETE_ALL_BOOKINGS':
@@ -114,6 +120,8 @@
                         'On Break',
                     'TYPE_AT_HOME':
                         'Daily rest period',
+                    'TYPE_BREAK_NOT_TRACKED':
+                        'Not tracked break',
                     'SUBHEADER_MISC_SETTINGS':
                         'Miscellaneous',
                     'SUBHEADER_WORKINGTIME_SETTINGS':
@@ -157,7 +165,13 @@
                     'EMPTY_NO_POINTS_IN_TIME_HEADER':
                         'No points in time defined',
                     'EMPTY_NO_POINTS_IN_TIME_CONTENT':
-                        'You may define points in time which are shown in the timeline tab'
+                        'You may define points in time which are shown in the timeline tab',
+                    'INVALID_TS_CHECK_POS':
+                        'Invalid timeseries. Check positions ',
+                    'INVALID_TS_CHECK_FIRST':
+                        'Invalid timeseries. Check first element.',
+                    'AND_WITH_SPACES':
+                        ' and '
                 })
                 .translations('de_DE', {
                     'TOAST_DELETE_SINGLE':
@@ -216,6 +230,12 @@
                         'Titel des Zeitpunkts',
                     'LABEL_OVERTIME':
                         'Überzeit',
+                    'LABEL_STARTTIME':
+                        'Anfang',
+                    'LABEL_ENDTIME':
+                        'Ende',
+                    'LABEL_ERROR':
+                        'Fehler',
                     'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS':
                         'Delete all tracked bookings',
                     'LABEL_DELETE_ALL_BOOKINGS':
@@ -267,6 +287,8 @@
                         'In Pause',
                     'TYPE_AT_HOME':
                         'Tägl. Ruhezeit',
+                    'TYPE_BREAK_NOT_TRACKED':
+                        'Nicht aufgezeichnete Pausenzeit',
                     'SUBHEADER_MISC_SETTINGS':
                         'Sonstiges',
                     'SUBHEADER_WORKINGTIME_SETTINGS':
@@ -311,9 +333,15 @@
                         'Keine Zeitpunkte festgelegt',
                     'EMPTY_NO_POINTS_IN_TIME_CONTENT':
                         'Sie können Zeitpunkt definieren, welche dann im Zeitstrahl ' +
-                        'angezeigt werden.'
+                        'angezeigt werden.',
+                    'INVALID_TS_CHECK_POS':
+                        'Ungültige Zeitserie. Prüfen Sie die Positionen ',
+                    'INVALID_TS_CHECK_FIRST':
+                        'Ungültige Zeitserie. Prüfen Sie das erste Element.',
+                    'AND_WITH_SPACES':
+                        ' und '
                 })
                 .preferredLanguage('de_DE')
                 .useSanitizeValueStrategy('sanitizeParameters');
         });
-})();
+}());

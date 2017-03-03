@@ -1,0 +1,28 @@
+<md-dialog ng-attr-aria-label="{{ ariaLabel }}">
+    <form ng-cloak="ng-cloak"
+          ng-submit="answer(value)">
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                <h2 class="md-title">{{ title }}</h2>
+                <md-input-container flex="100"
+                                    md-no-float="">
+                    <input type="number"
+                           ng-model="value"
+                           required="required"
+                           ng-attr-placeholder="{{ placeholder }}" 
+                           ng-attr-step="{{ step }}" />
+                </md-input-container>
+            </div>
+        </md-dialog-content>
+        <md-dialog-actions layout="row">
+            <md-button class="md-button md-primary"
+                       ng-click="close()">
+                {{ cancel }}
+            </md-button>
+            <md-button type="submit"
+                       class="md-button md-primary">
+                {{ ok }}
+            </md-button>
+        </md-dialog-actions>
+    </form>
+</md-dialog>

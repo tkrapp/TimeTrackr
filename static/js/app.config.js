@@ -20,6 +20,17 @@
                             $timeout(function () {
                                 element[0].focus();
                                 element[0].click();
+                                
+                                try {
+                                    element[0].setSelectionRange(0,
+                                        element[0].value.length);
+                                } catch (e) {
+                                    try {
+                                        element[0].select();
+                                    } catch (e) {
+                                        // element does not support selection
+                                    }
+                                }
                             });
                         }
                     });
@@ -30,6 +41,32 @@
                 }
             };
         }])
+        .filter('readableTimeDelta', function() {
+            return function (milliseconds) {
+                var seconds = milliseconds / 1000,
+                    negativeValue = milliseconds < 0,
+                    hours,
+                    minutes,
+                    remainder;
+
+                if (negativeValue) {
+                    seconds = Math.abs(seconds);
+                }
+
+                hours = parseInt(seconds / 3600, 10);
+                remainder = seconds % 3600;
+                minutes = parseInt(remainder / 60, 10);
+
+                if (hours < 10) {
+                    hours = '0' + hours;
+                }
+                if (minutes < 10) {
+                    minutes = '0' + minutes;
+                }
+
+                return (negativeValue ? '-' : '') + hours + ':' + minutes;
+            };
+        })
         .config(function ($mdDateLocaleProvider) {
             $mdDateLocaleProvider.formatDate = function (date) {
                 return moment(date).format('YYYY-MM-DD');
