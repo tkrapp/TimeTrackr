@@ -779,7 +779,7 @@ detectIDB(function (idb_capability) {
 
                                 oldBooking.timestamp = timestamp;
                                 oldBooking.type = type;
-
+                                
                                 toast
                                     .textContent(translations.TOAST_UPDATE_BOOKING)
                                     .action(translations.UNDO)
@@ -1302,6 +1302,9 @@ detectIDB(function (idb_capability) {
                             (timeWorking + timeDiff) === pointAfter.value) {
                         pair.endTitle = pointAfter.title;
                         pair.endClass = pointAfter.class;
+                        
+                        pointAfterIdx += 1;
+                        pointAfter = pointsAfter[pointAfterIdx];
                     }
 
                     timeDiff = pair.end.diff(pair.start);
@@ -1382,6 +1385,10 @@ detectIDB(function (idb_capability) {
                         } else if (timeWorking > BREAK_AFTER) {
                             notTrackedBreak = Math.min(FIRST_BREAK - timeOnBreak,
                                 timeWorking - BREAK_AFTER);
+                        }
+                        
+                        if (notTrackedBreak < 0) {
+                            notTrackedBreak = 0;
                         }
                         
                         $scope.timeTable.startTime = pairs[0].start;
