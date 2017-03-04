@@ -779,7 +779,7 @@ detectIDB(function (idb_capability) {
 
                                 oldBooking.timestamp = timestamp;
                                 oldBooking.type = type;
-
+                                
                                 toast
                                     .textContent(translations.TOAST_UPDATE_BOOKING)
                                     .action(translations.UNDO)
