@@ -1,20 +1,21 @@
 (function () {
     'use strict';
     
-    var MODULE_NAME = 'TimeTrackr';
+    let MODULE_NAME = 'TimeTrackr';
     
     angular
         .module(
             MODULE_NAME,
             [
                 'ngMaterial', 'ngSanitize', 'indexedDB', 'pascalprecht.translate',
-                'ngMessages', 'angularMoment'
+                'ngMessages', 'ngMoment'
             ]
         )
         .directive('focusMe', ['$timeout', '$parse', function ($timeout, $parse) {
             return {
                 link: function (scope, element, attrs) {
-                    var model = $parse(attrs.focusMe);
+                    let model = $parse(attrs.focusMe);
+                    
                     scope.$watch(model, function (value) {
                         if (value === true) {
                             $timeout(function () {
@@ -43,28 +44,22 @@
         }])
         .filter('readableTimeDelta', function() {
             return function (milliseconds) {
-                var seconds = milliseconds / 1000,
-                    negativeValue = milliseconds < 0,
-                    hours,
-                    minutes,
-                    remainder;
-
-                if (negativeValue) {
-                    seconds = Math.abs(seconds);
-                }
-
-                hours = parseInt(seconds / 3600, 10);
-                remainder = seconds % 3600;
-                minutes = parseInt(remainder / 60, 10);
+                let negative = milliseconds < 0,
+                    sign = negative ? '-' : '',
+                    seconds = Math.abs(milliseconds / 1000),
+                    hours = parseInt(seconds / 3600, 10),
+                    remainder = seconds % 3600,
+                    minutes = parseInt(remainder / 60, 10);
 
                 if (hours < 10) {
                     hours = '0' + hours;
                 }
+                
                 if (minutes < 10) {
                     minutes = '0' + minutes;
                 }
 
-                return (negativeValue ? '-' : '') + hours + ':' + minutes;
+                return sign + hours + ':' + minutes;
             };
         })
         .config(function ($mdDateLocaleProvider) {
