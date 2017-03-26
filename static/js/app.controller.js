@@ -32,8 +32,7 @@
         return b.timestamp - a.timestamp;
     }
 
-    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale,
-        $translate, $window) {
+    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate, $window) {
         let storage = $indexedDB;
         
         window.scope = $scope;
@@ -136,8 +135,7 @@
         
         $scope.$watch('config', saveConfig, true);
         $scope.setConfigDailyWorkingTime = function (evt) {
-            $translate(['DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER',
-                        'OK', 'CANCEL'])
+            $translate(['DAILY_WORKINGTIME', 'DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL'])
                 .then(function (translations) {
                     $mdDialog.show({
                         locals: {
@@ -164,8 +162,8 @@
         };
         
         $scope.setConfigMaxDailyWorkingTime = function (evt) {
-            $translate(['MAX_DAILY_WORKINGTIME',
-                        'MAX_DAILY_WORKINGTIME_PLACEHOLDER', 'OK', 'CANCEL'])
+            $translate(['MAX_DAILY_WORKINGTIME', 'MAX_DAILY_WORKINGTIME_PLACEHOLDER', 'OK',
+                        'CANCEL'])
                 .then(function (translations) {
                     $mdDialog.show({
                         locals: {
@@ -193,8 +191,7 @@
         };
         
         $scope.setConfigDailyRestPeriod = function (evt) {
-            $translate(['DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER',
-                        'OK', 'CANCEL'])
+            $translate(['DAILY_RESTPERIOD', 'DAILY_RESTPERIOD_PLACEHOLDER', 'OK', 'CANCEL'])
                 .then(function (translations) {
                     $mdDialog.show({
                         locals: {
@@ -328,24 +325,23 @@
         };
         
         $scope.deletePointInTime = function (pointInTime) {
-            $translate([
-                'OK', 'CANCEL', 'DIALOG_TITLE_DELETE_POINT_IN_TIME',
-                'DIALOG_CONTENT_DELETE_POINT_IN_TIME'
-            ]).then(function (translations) {
-                let confirmDeletion = $mdDialog.confirm();
-                
-                confirmDeletion
-                    .title(translations.DIALOG_TITLE_DELETE_POINT_IN_TIME)
-                    .textContent(translations
-                        .DIALOG_CONTENT_DELETE_POINT_IN_TIME)
-                    .ariaLabel(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
-                    .ok(translations.OK)
-                    .cancel(translations.CANCEL);
-                
-                $mdDialog.show(confirmDeletion).then(function (result) {
-                    delete $scope.config.pointsInTime[pointInTime.title];
+            $translate(['OK', 'CANCEL', 'DIALOG_TITLE_DELETE_POINT_IN_TIME',
+                        'DIALOG_CONTENT_DELETE_POINT_IN_TIME'])
+                .then(function (translations) {
+                    let confirmDeletion = $mdDialog.confirm();
+
+                    confirmDeletion
+                        .title(translations.DIALOG_TITLE_DELETE_POINT_IN_TIME)
+                        .textContent(translations
+                            .DIALOG_CONTENT_DELETE_POINT_IN_TIME)
+                        .ariaLabel(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
+                        .ok(translations.OK)
+                        .cancel(translations.CANCEL);
+
+                    $mdDialog.show(confirmDeletion).then(function (result) {
+                        delete $scope.config.pointsInTime[pointInTime.title];
+                    });
                 });
-            });
         };
         
         function enhanceBooking(booking) {
@@ -454,31 +450,36 @@
                 }
             }
             
-            $translate([
-                'TOAST_DELETE_SINGLE', 'UNDO'
-            ]).then(function (translations) {
-                let idx = $scope.bookings.indexOf(booking),
-                    toast = $mdToast.simple();
+            $translate(['TOAST_DELETE_SINGLE', 'UNDO'])
+                .then(function (translations) {
+                    let idx = $scope.bookings.indexOf(booking),
+                        toast = $mdToast.simple();
 
-                toast
-                    .textContent(translations.TOAST_DELETE_SINGLE)
-                    .action(translations.UNDO)
-                    .highlightAction(true)
-                    .highlightClass('md-primary')
-                    .hideDelay(TOAST_DELAY);
+                    toast
+                        .textContent(translations.TOAST_DELETE_SINGLE)
+                        .action(translations.UNDO)
+                        .highlightAction(true)
+                        .highlightClass('md-primary')
+                        .hideDelay(TOAST_DELAY);
 
-                if (idx >= 0) {
-                    $scope.bookings.splice(idx, 1);
+                    if (idx >= 0) {
+                        $scope.bookings.splice(idx, 1);
 
-                    $mdToast
-                        .show(toast)
-                        .then(doDeleteBooking)
-                        .catch(doDeleteBooking);
-                }
-            });
+                        $mdToast
+                            .show(toast)
+                            .then(doDeleteBooking)
+                            .catch(doDeleteBooking);
+                    }
+                });
         };
         
         $scope.deleteAllBookings = function (evt) {
+            function clearBookings(store) {
+                store
+                    .clear()
+                    .then(updateBookings);
+            };
+            
             $translate(['TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL',
                         'DIALOG_CONTENT_DELETE_ALL',
                         'DIALOG_LABEL_ARIA_DELETE_ALL_BOOKINGS',
@@ -518,12 +519,7 @@
                                         // really remove the bookings from
                                         // indexeddb
                                         storage
-                                            .openStore(OBJECT_STORE_NAME,
-                                                function (store) {
-                                                    store
-                                                        .clear()
-                                                        .then(updateBookings);
-                                                });
+                                            .openStore(OBJECT_STORE_NAME, clearBookings);
                                     } else {
                                         updateBookings();
                                     }
