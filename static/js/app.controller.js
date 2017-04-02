@@ -1040,8 +1040,6 @@
                             pointAtIdx += 1;
                         } else if (formattedStart < formattedValue &&
                                 formattedValue < formattedEnd) {
-                            lenPairs += 1;
-
                             let newPair = {
                                 'start': pair.start.clone(),
                                 'end': pointAt.value.clone().date(pair.start.date())
@@ -1051,7 +1049,8 @@
                                 'endTitle': pointAt.title,
                                 'endClass': pointAt.class
                             };
-
+                            
+                            lenPairs += 1;
                             pair.start = newPair.end.clone();
                             pairs.splice(idx, 0, newPair);
 
