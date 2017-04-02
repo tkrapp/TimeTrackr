@@ -38,6 +38,10 @@
 	z-index: 1;
 }
 
+.app-tabs > md-tabs-content-wrapper > md-tab-content {
+    touch-action: auto !important;
+}
+
 .my-input-container {
     padding-left: 64px !important;
 }

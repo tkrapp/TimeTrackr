@@ -1,45 +1,45 @@
+/*jshint browser: true, maxlen: 100, indent: 4, esversion: 6, unused: true*/
+/*globals angular, moment*/
 (function () {
     'use strict';
 
-    let MODULE_NAME = 'TimeTrackr',
-        BOOKING_COMING = 'BOOKING_COMING',
-        BOOKING_LEAVING = 'BOOKING_LEAVING',
-        BOOKING_SYNTHETIC = 'BOOKING_SYNTHETIC',
-        BOOKING_NON_SYNTHETIC = 'BOOKING_NON_SYNTHETIC',
-        BOOKING_DAILY_WORKING_TIME = 'BOOKING_DAILY_WORKING_TIME',
-        BOOKING_MAX_DAILY_WORKING_TIME = 'BOOKING_MAX_DAILY_WORKING_TIME',
-        IDB_NAME = 'TimeTrackrDB',
-        IDX_BOOKING_TYPE = 'type_idx',
-        IDX_BOOKING_TIMESTAMP = 'tstamp_idx',
-        CONFIG_STORE_NAME = 'config',
-        OBJECT_STORE_NAME = 'bookings',
-        TOAST_DELAY = 3000,
-        TYPE_WORKING = 'TYPE_WORKING',
-        TYPE_ON_BREAK = 'TYPE_ON_BREAK',
-        TYPE_AT_HOME = 'TYPE_AT_HOME',
-        BREAK_AFTER = 6 * 60 * 60 * 1000,
-        SECOND_BREAK_AFTER = 9 * 60 * 60 * 1000,
-        FIRST_BREAK = 30 * 60 * 1000,
-        SECOND_BREAK = 15 * 60 * 1000,
-        SVG_LINE_HEIGHT = 80,
-        SVG_PADDING_V = 30,
-        SVG_PADDING_H = 30,
-        SVG_TEXT_V_OFFSET = 5,
-        SVG_TYPE_TEXT_V_OFFSET = SVG_LINE_HEIGHT / 2 + 5,
-        SVG_TEXT_L = 30;
+    const MODULE_NAME = 'TimeTrackr',
+          BOOKING_COMING = 'BOOKING_COMING',
+          BOOKING_LEAVING = 'BOOKING_LEAVING',
+          BOOKING_SYNTHETIC = 'BOOKING_SYNTHETIC',
+          BOOKING_NON_SYNTHETIC = 'BOOKING_NON_SYNTHETIC',
+          BOOKING_DAILY_WORKING_TIME = 'BOOKING_DAILY_WORKING_TIME',
+          BOOKING_MAX_DAILY_WORKING_TIME = 'BOOKING_MAX_DAILY_WORKING_TIME',
+          IDB_NAME = 'TimeTrackrDB',
+          CONFIG_STORE_NAME = 'config',
+          OBJECT_STORE_NAME = 'bookings',
+          TOAST_DELAY = 3000,
+          TYPE_WORKING = 'TYPE_WORKING',
+          TYPE_ON_BREAK = 'TYPE_ON_BREAK',
+          TYPE_AT_HOME = 'TYPE_AT_HOME',
+          BREAK_AFTER = 6 * 60 * 60 * 1000,
+          SECOND_BREAK_AFTER = 9 * 60 * 60 * 1000,
+          FIRST_BREAK = 30 * 60 * 1000,
+          SECOND_BREAK = 15 * 60 * 1000,
+          SVG_LINE_HEIGHT = 80,
+          SVG_PADDING_V = 30,
+          SVG_PADDING_H = 30,
+          SVG_TEXT_V_OFFSET = 5,
+          SVG_TYPE_TEXT_V_OFFSET = SVG_LINE_HEIGHT / 2 + 5,
+          SVG_TEXT_L = 30;
 
     function sort_by_timestamp_desc(a, b) {
         return b.timestamp - a.timestamp;
     }
 
-    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate, $window) {
+    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
         let storage = $indexedDB;
         
         window.scope = $scope;
         moment.locale($locale.id);
         
         $scope.newBookingSpeedDial = {
-            trigger: function (evt) {
+            trigger: function () {
                 if ($scope.newBookingSpeedDial.isOpen) {
                     // speed dial was open and is closed using the trigger
                     
@@ -281,10 +281,6 @@
                 fullscreen: true
             })
                 .then(function (answer) {
-                    function filterNotUndefined(value) {
-                        return value !== undefined;
-                    }
-
                     let pointsInTime = $scope.config.pointsInTime;
 
                     if (answer.title === undefined || answer.type === undefined ||
@@ -312,7 +308,7 @@
 
                                 $mdDialog
                                     .show(confirmOverwrite)
-                                    .then(function (result) {
+                                    .then(function () {
                                         pointsInTime[answer.title] = answer;
                                     });
                             });
@@ -338,9 +334,10 @@
                         .ok(translations.OK)
                         .cancel(translations.CANCEL);
 
-                    $mdDialog.show(confirmDeletion).then(function (result) {
-                        delete $scope.config.pointsInTime[pointInTime.title];
-                    });
+                    $mdDialog.show(confirmDeletion)
+                        .then(function () {
+                            delete $scope.config.pointsInTime[pointInTime.title];
+                        });
                 });
         };
         
@@ -393,28 +390,25 @@
                 }
             }
             
-            storage.openStore(OBJECT_STORE_NAME, function (store) {
-                $translate([
-                    'TOAST_DELETE_MANY', 'UNDO'
-                ]).then(function (translations) {
-                    let toast = $mdToast.simple(),
-                        idx;
+            $translate([
+                'TOAST_DELETE_MANY', 'UNDO'
+            ]).then(function (translations) {
+                let toast = $mdToast.simple();
 
-                    toast
-                        .textContent(translations.TOAST_DELETE_MANY)
-                        .action(translations.UNDO)
-                        .highlightAction(true)
-                        .highlightClass('md-primary')
-                        .hideDelay(TOAST_DELAY);
-                    
-                    $scope.bookings = $scope.bookings
-                        .filter(isNotSelectedBooking);
-                    
-                    $mdToast
-                        .show(toast)
-                        .then(doDeleteBookings)
-                        .catch(doDeleteBookings);
-                });
+                toast
+                    .textContent(translations.TOAST_DELETE_MANY)
+                    .action(translations.UNDO)
+                    .highlightAction(true)
+                    .highlightClass('md-primary')
+                    .hideDelay(TOAST_DELAY);
+
+                $scope.bookings = $scope.bookings
+                    .filter(isNotSelectedBooking);
+
+                $mdToast
+                    .show(toast)
+                    .then(doDeleteBookings)
+                    .catch(doDeleteBookings);
             });
         };
         
@@ -478,7 +472,7 @@
                 store
                     .clear()
                     .then(updateBookings);
-            };
+            }
             
             $translate(['TOAST_DELETE_ALL', 'DIALOG_TITLE_DELETE_ALL',
                         'DIALOG_CONTENT_DELETE_ALL',
@@ -618,7 +612,7 @@
                             function persistUpdate (store) {
                                 store
                                     .delete(oldTimestamp.unix())
-                                    .then(insertNewBooking.bind(this, store));
+                                    .then((store) => insertNewBooking(store));
                             }
 
                             let toast = $mdToast.simple(),
@@ -626,7 +620,7 @@
                                 type = answer.type,
                                 timestamp = moment(answer.date),
                                 oldTimestamp,
-                                oldType
+                                oldType;
 
                             timestamp
                                 .hours(time.getHours())
@@ -900,10 +894,6 @@
             return bookingB.timestamp - bookingA.timestamp;
         }
         
-        function gteToday(booking) {
-            return moment(0, 'HH') <= booking.timestamp;
-        }
-        
         $scope.timeTable = {
             startTime: '---',
             endTime: '---',
@@ -977,7 +967,7 @@
         
         function getLastWorkingDay(bookings, dailyRestPeriod) {
             let lenBookings = bookings.length,
-                restPeriodInMicroseconds = toMicroTime(dailyRestPeriod);;
+                restPeriodInMicroseconds = toMicroTime(dailyRestPeriod);
             
             bookings = bookings.slice(); // Copy bookings for reversing
             bookings.sort(sortBookingsDesc);
@@ -1240,7 +1230,7 @@
         .config(function ($indexedDBProvider) {
             $indexedDBProvider
                 .connection(IDB_NAME)
-                .upgradeDatabase(1, function (evt, db, tx) {
+                .upgradeDatabase(1, function (evt, db) {
                     let objStore = db.createObjectStore(
                             'trackedActions',
                             { keyPath: 'timestamp' }
@@ -1249,10 +1239,10 @@
                     objStore.createIndex('type_idx', 'type', { unique: false });
                     objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
                 })
-                .upgradeDatabase(2, function (evt, db, tx) {
+                .upgradeDatabase(2, function (evt, db) {
                     db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
                 })
-                .upgradeDatabase(3, function (evt, db, tx) {
+                .upgradeDatabase(3, function (evt, db) {
                     let objStore = db.createObjectStore('trackedBookings',
                             { keyPath: 'timestamp' });
 
@@ -1296,7 +1286,7 @@
                             }
                         };
                 })
-                .upgradeDatabase(5, function (evt, db, tx) {
+                .upgradeDatabase(5, function (evt, db) {
                     db.deleteObjectStore('TrackrConfig');
                     db.deleteObjectStore('trackedBookings');
                     db.deleteObjectStore('trackedActions');
