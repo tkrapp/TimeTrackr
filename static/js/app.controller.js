@@ -612,7 +612,7 @@
                             function persistUpdate (store) {
                                 store
                                     .delete(oldTimestamp.unix())
-                                    .then((store) => insertNewBooking(store));
+                                    .then(() => insertNewBooking(store));
                             }
 
                             let toast = $mdToast.simple(),
