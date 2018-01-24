@@ -91,6 +91,15 @@
                                     <md-icon md-svg-icon="static/icons/delete_gry.svg"></md-icon>
                                 </md-button>
                             </md-list-item>
+                            <md-list-item>
+                                <md-button class="md-mini md-icon-button"
+                                           aria-label="Show seven more days"
+                                           ng-click="updateEarliestBookingTimestamp()"
+                                           ng-disabled="bookings.length === totalBookingsCount">
+                                    <md-icon md-svg-icon="static/icons/more_arrow.svg"></md-icon>
+                                </md-button>
+                                <p>Displaying bookings since {{ earliestBookingTimestamp }}</p>
+                            </md-list-item>
                             <md-list-item ng-if="bookings.length === 0">
                                 <p translate="NO_BOOKINGS_BY_NOW"></p>
                             </md-list-item>

@@ -2,7 +2,7 @@
 /*globals angular, moment*/
 (function () {
     'use strict';
-
+    
     const MODULE_NAME = 'TimeTrackr',
           BOOKING_COMING = 'BOOKING_COMING',
           BOOKING_LEAVING = 'BOOKING_LEAVING',
@@ -26,13 +26,15 @@
           SVG_PADDING_H = 30,
           SVG_TEXT_V_OFFSET = 5,
           SVG_TYPE_TEXT_V_OFFSET = SVG_LINE_HEIGHT / 2 + 5,
-          SVG_TEXT_L = 30;
-
+          SVG_TEXT_L = 30,
+          INDEX_TIMESTAMP = 'tstamp_idx',
+          INDEX_TYPE = 'type_idx';
+    
     function sort_by_timestamp_desc(a, b) {
         return b.timestamp - a.timestamp;
     }
-
-    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate) {
+    
+    function TimeTrackrCtrl($scope, $indexedDB, $mdDialog, $mdToast, $locale, $translate, $timeout) {
         let storage = $indexedDB;
         
         window.scope = $scope;
@@ -233,7 +235,7 @@
                 case $scope.valueAfter:
                     value = $scope.hours;
                     break;
-
+                    
                 default:
                     value = $scope.timestamp;
                 }
@@ -262,7 +264,7 @@
             $scope.hours = undefined;
             $scope.timestamp = undefined;
         }
-        
+        sort_by_timestamp_desc
         $scope.showPointInTimeDialog = function (ev) {
             $mdDialog.show({
                 locals: {
@@ -282,7 +284,7 @@
             })
                 .then(function (answer) {
                     let pointsInTime = $scope.config.pointsInTime;
-
+                    
                     if (answer.title === undefined || answer.type === undefined ||
                             answer.value === undefined) {
                         return;
@@ -293,7 +295,7 @@
                                     'DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME'])
                             .then(function (translations) {
                                 let confirmOverwrite = $mdDialog.confirm();
-
+                                
                                 confirmOverwrite
                                     .title(translations
                                         .DIALOG_TITLE_CONFIRM_OVERWRITE_POINT_IN_TIME)
@@ -305,17 +307,17 @@
                                         .DIALOG_CONFIRM_OVERWRITE_POINT_IN_TIME)
                                     .cancel(translations
                                         .DIALOG_CANCEL_OVERWRITE_POINT_IN_TIME);
-
+                                
                                 $mdDialog
                                     .show(confirmOverwrite)
                                     .then(function () {
                                         pointsInTime[answer.title] = answer;
                                     });
                             });
-
+                        
                         return;
                     }
-
+                    
                     pointsInTime[answer.title] = answer;
                 });
         };
@@ -325,7 +327,7 @@
                         'DIALOG_CONTENT_DELETE_POINT_IN_TIME'])
                 .then(function (translations) {
                     let confirmDeletion = $mdDialog.confirm();
-
+                    
                     confirmDeletion
                         .title(translations.DIALOG_TITLE_DELETE_POINT_IN_TIME)
                         .textContent(translations
@@ -333,7 +335,7 @@
                         .ariaLabel(translations.DIALOG_CONTENT_DELETE_POINT_IN_TIME)
                         .ok(translations.OK)
                         .cancel(translations.CANCEL);
-
+                    
                     $mdDialog.show(confirmDeletion)
                         .then(function () {
                             delete $scope.config.pointsInTime[pointInTime.title];
@@ -348,15 +350,25 @@
             return booking;
         }
         
-        function updateBookings() {
+        function updateBookings(earliestBookingTimestamp) {
+            earliestBookingTimestamp = earliestBookingTimestamp || $scope.earliestBookingTimestamp;
             storage.openStore(OBJECT_STORE_NAME, function (store) {
-                store.getAll().then(function (result) {
+                let find = store.query();
+                
+                find.$gte(earliestBookingTimestamp.unix());
+                find.$index(INDEX_TIMESTAMP);
+                
+                store.eachWhere(find).then(function (result) {
                     $scope.bookings = result
                         .sort(sort_by_timestamp_desc)
                         .map(enhanceBooking);
                     
                     // Force ui to update
                     $scope.$applyAsync();
+                });
+                
+                store.count().then(function (count) {
+                    $scope.totalBookingsCount = count;
                 });
             });
         }
@@ -368,6 +380,25 @@
         function isNotSelectedBooking(booking) {
             return booking.selected === false;
         }
+        
+        $scope.totalBookingsCount = 0;
+        $scope.earliestBookingTimestamp = moment().subtract(7, 'days').hours(0).minutes(0).seconds(0);
+        $scope.updateEarliestBookingTimestamp = function (earliestBookingTimestamp) {
+            let numDisplayedBookings = $scope.bookings.length;
+            
+            earliestBookingTimestamp = earliestBookingTimestamp || $scope.earliestBookingTimestamp.clone();
+            
+            earliestBookingTimestamp.subtract(7, 'days');
+            updateBookings(earliestBookingTimestamp);
+            $timeout(function () {
+                if ($scope.bookings.length === numDisplayedBookings &&
+                        numDisplayedBookings < $scope.totalBookingsCount) {
+                    $scope.updateEarliestBookingTimestamp(earliestBookingTimestamp);
+                } else {
+                    $scope.earliestBookingTimestamp = earliestBookingTimestamp;
+                }
+            }, 50);
+        };
         
         $scope.updateSelectedBookings = function () {
             $scope.selectedBookings = $scope.bookings.filter(isSelectedBooking);
@@ -394,17 +425,17 @@
                 'TOAST_DELETE_MANY', 'UNDO'
             ]).then(function (translations) {
                 let toast = $mdToast.simple();
-
+                
                 toast
                     .textContent(translations.TOAST_DELETE_MANY)
                     .action(translations.UNDO)
                     .highlightAction(true)
                     .highlightClass('md-primary')
                     .hideDelay(TOAST_DELAY);
-
+                
                 $scope.bookings = $scope.bookings
                     .filter(isNotSelectedBooking);
-
+                
                 $mdToast
                     .show(toast)
                     .then(doDeleteBookings)
@@ -448,17 +479,17 @@
                 .then(function (translations) {
                     let idx = $scope.bookings.indexOf(booking),
                         toast = $mdToast.simple();
-
+                    
                     toast
                         .textContent(translations.TOAST_DELETE_SINGLE)
                         .action(translations.UNDO)
                         .highlightAction(true)
                         .highlightClass('md-primary')
                         .hideDelay(TOAST_DELAY);
-
+                    
                     if (idx >= 0) {
                         $scope.bookings.splice(idx, 1);
-
+                        
                         $mdToast
                             .show(toast)
                             .then(doDeleteBooking)
@@ -481,7 +512,7 @@
                         'DIALOG_CANCEL_DELETE_ALL', 'UNDO'])
                 .then(function (translations) {
                     let confirm = $mdDialog.confirm();
-
+                    
                     confirm
                         .title(translations.DIALOG_TITLE_DELETE_ALL)
                         .textContent(translations.DIALOG_CONTENT_DELETE_ALL)
@@ -490,22 +521,22 @@
                         .targetEvent(evt)
                         .ok(translations.DIALOG_CONFIRM_DELETE_ALL)
                         .cancel(translations.DIALOG_CANCEL_DELETE_ALL);
-
+                    
                     $mdDialog
                         .show(confirm)
                         .then(function () {
                             let toast = $mdToast.simple();
-
+                            
                             // just visually remove the bookings
                             $scope.bookings = [];
-
+                            
                             toast
                                 .textContent(translations.TOAST_DELETE_ALL)
                                 .action(translations.UNDO)
                                 .highlightAction(true)
                                 .highlightClass('md-primary')
                                 .hideDelay(TOAST_DELAY);
-
+                            
                             $mdToast
                                 .show(toast)
                                 .then(function (response) {
@@ -546,7 +577,7 @@
                             time: $scope.time
                         });
                     };
-
+                    
                     $scope.availableTypes = [
                         {
                             value: BOOKING_COMING,
@@ -608,30 +639,30 @@
                                     })
                                     .then(updateBookings);
                             }
-
+                            
                             function persistUpdate (store) {
                                 store
                                     .delete(oldTimestamp.unix())
                                     .then(() => insertNewBooking(store));
                             }
-
+                            
                             let toast = $mdToast.simple(),
                                 time = answer.time,
                                 type = answer.type,
                                 timestamp = moment(answer.date),
                                 oldTimestamp,
                                 oldType;
-
+                            
                             timestamp
                                 .hours(time.getHours())
                                 .minutes(time.getMinutes())
                                 .seconds(time.getSeconds())
                                 .milliseconds(time.getMilliseconds());
-
+                            
                             if (answer.isOld === true) {
                                 oldTimestamp = oldBooking.timestamp;
                                 oldType = oldBooking.type;
-
+                                
                                 oldBooking.timestamp = timestamp;
                                 oldBooking.type = type;
                                 
@@ -642,7 +673,7 @@
                                     .highlightAction(true)
                                     .highlightClass('md-primary')
                                     .hideDelay(TOAST_DELAY);
-
+                                
                                 $mdToast
                                     .show(toast)
                                     .then(function (response) {
@@ -693,13 +724,13 @@
                         (bk.type === BOOKING_LEAVING && prev_bk_type === BOOKING_LEAVING)) {
                     return idx_bk;
                 }
-
+                
                 prev_bk_type = bk.type;
             }
-
+            
             return -1;
         }
-
+        
         function sixHoursCheck(pair) {
             if (pair.type === TYPE_ON_BREAK) {
                 return false;
@@ -707,7 +738,7 @@
                 return (pair.end - pair.start) >= BREAK_AFTER;
             }
         }
-
+        
         function nineHoursCheck(pair, time_working, time_on_break) {
             if (pair.type === TYPE_ON_BREAK) {
                 return false;
@@ -725,12 +756,12 @@
             let pairs = [],
                 time_on_break = 0,
                 time_working = 0;
-
+            
             for (let idx_bk = 0; idx_bk < timeseries.length; idx_bk += 2) {
                 let pair_start = timeseries[idx_bk].timestamp;
                 let pair_end = timeseries[idx_bk + 1] ?
                         timeseries[idx_bk + 1].timestamp : null;
-
+                        
                 if (idx_bk > 0) {
                     pairs.push({
                         'start': timeseries[idx_bk - 1].timestamp,
@@ -739,7 +770,7 @@
                         'synthetic': BOOKING_NON_SYNTHETIC
                     });
                 }
-
+                
                 pairs.push({
                     'start': pair_start,
                     'end': pair_end,
@@ -747,25 +778,25 @@
                     'synthetic': BOOKING_NON_SYNTHETIC
                 });
             }
-
+            
             for (let idx_p = 0; idx_p < pairs.length; idx_p += 1) {
                 let pair = pairs[idx_p];
-
+                
                 if (pair.end === null) {
                     if (time_working < BREAK_AFTER && time_on_break < FIRST_BREAK) {
                         pair.end = pair.start.clone().add(BREAK_AFTER - time_working);
                         pair.synthetic = BOOKING_SYNTHETIC;
-
+                        
                         let pause_start = pair.end.clone();
                         let pause_end = pause_start.clone().add(FIRST_BREAK - time_on_break);
-
+                        
                         pairs.push({
                             'start': pause_start,
                             'end': pause_end,
                             'type': TYPE_ON_BREAK,
                             'synthetic': BOOKING_SYNTHETIC
                         });
-
+                        
                         pairs.push({
                             'start': pause_end.clone(),
                             'end': null,
@@ -774,22 +805,22 @@
                         });
                     } else if (time_working < SECOND_BREAK_AFTER &&
                             time_on_break < (FIRST_BREAK + SECOND_BREAK)) {
-
+                        
                         pair.end = pair.start.clone()
                             .add(SECOND_BREAK_AFTER - time_working);
                         pair.synthetic = BOOKING_SYNTHETIC;
-
+                        
                         let pause_start = pair.end.clone();
                         let pause_end = pause_start.clone()
                             .add((FIRST_BREAK + SECOND_BREAK) - time_on_break);
-
+                        
                         pairs.push({
                             'start': pause_start,
                             'end': pause_end,
                             'type': TYPE_ON_BREAK,
                             'synthetic': BOOKING_SYNTHETIC
                         });
-
+                        
                         pairs.push({
                             'start': pause_end.clone(),
                             'end': null,
@@ -821,10 +852,10 @@
                         'type': TYPE_ON_BREAK,
                         'synthetic': BOOKING_SYNTHETIC
                     };
-
+                    
                     if (new_pair.end >= pair_end) {
                         new_pair.end = pair_end;
-
+                        
                         if (new_pair.end - new_pair.start > 0) {
                             pairs.splice(idx_p + 1, 0, new_pair);
                         }
@@ -851,13 +882,13 @@
                         'synthetic': BOOKING_SYNTHETIC
                     };
                     let pair_end = pair.end.clone();
-
+                    
                     pair.synthetic = BOOKING_SYNTHETIC;
                     pair.end = new_pair.start.clone();
-
+                    
                     if (new_pair.end >= pair_end) {
                         new_pair.end = pair_end;
-
+                        
                         pairs.splice(idx_p + 1, 0, new_pair);
                     } else if (new_pair.end < pair_end) {
                         let new_new_pair = {
@@ -866,7 +897,7 @@
                             'type': TYPE_WORKING,
                             'synthetic': BOOKING_SYNTHETIC
                         };
-
+                        
                         pairs.splice(
                             idx_p + 1,
                             0,
@@ -875,7 +906,7 @@
                         );
                     }
                 }
-
+                
                 if (pair.type === TYPE_WORKING) {
                     time_working += (pair.end - pair.start);
                 } else {
@@ -977,7 +1008,7 @@
             } else {
                 let prevBooking = bookings[0],
                     idx;
-
+                
                 for (idx = 1; idx >= 0 && idx < lenBookings; idx += 1) {
                     let curBooking = bookings[idx],
                         timeDiff = (prevBooking.timestamp - curBooking.timestamp);
@@ -1022,14 +1053,14 @@
             
             for (let idx = 0; idx < lenPairs; idx += 1) {
                 let pair = pairs[idx];
-
+                
                 if (pair.type === TYPE_WORKING || pair.type === TYPE_ON_BREAK) {
                     for (let pointAtIdx = 0; pointAtIdx < pointsAt.length; pointAtIdx += 1) {
                         let pointAt = pointsAt[pointAtIdx],
                             formattedValue = pointAt.value.format('HH:mm'),
                             formattedStart = pair.start.format('HH:mm'),
                             formattedEnd = pair.end.format('HH:mm');
-
+                        
                         if (idx === 0 && formattedStart === formattedValue) {
                             pair.startTitle = pointAt.title;
                             pair.startclass = pointAt.class;
@@ -1053,13 +1084,13 @@
                             lenPairs += 1;
                             pair.start = newPair.end.clone();
                             pairs.splice(idx, 0, newPair);
-
+                            
                             pair = newPair;
-
+                            
                             pointAtIdx += 1;
                         }
                     }
-
+                    
                     pair.duration = pair.end - pair.start;
                 }
             }
@@ -1077,12 +1108,12 @@
             for (let idx = 0; idx < lenPairs; idx += 1) {
                 let pair = pairs[idx],
                     timeDiff = pair.end.diff(pair.start);
-
+                
                 if (pair.type === TYPE_WORKING) {
                     if (pointAfter &&
                             (timeWorking + timeDiff) > pointAfter.value) {
                         lenPairs += 1;
-
+                        
                         let newPair = {
                             'start': pair.start.clone(),
                             'end': pair.start.clone()
@@ -1092,12 +1123,12 @@
                             'endTitle': pointAfter.title,
                             'endClass': pointAfter.class
                         };
-
+                        
                         pair.start = newPair.end.clone();
                         pairs.splice(idx, 0, newPair);
-
+                        
                         pair = newPair;
-
+                        
                         pointAfterIdx += 1;
                         pointAfter = pointsAfter[pointAfterIdx];
                     } else if (pointAfter &&
@@ -1108,11 +1139,11 @@
                         pointAfterIdx += 1;
                         pointAfter = pointsAfter[pointAfterIdx];
                     }
-
+                    
                     timeDiff = pair.end.diff(pair.start);
                     timeWorking += timeDiff;
                 }
-
+                
                 pair.duration = pair.end - pair.start;
             }
         }
@@ -1141,16 +1172,16 @@
                         timeWorking = 0,
                         timeAtHome = 0,
                         notTrackedBreak = 0;
-
+                    
                     timeseries.sort(sortBookingsAsc);
                     
                     let checkResult = checkTimeSeriesValidity(timeseries),
                         validTs = checkResult === -1;
-
+                    
                     if (validTs === true) {
                         let pairs = calcTimes(timeseries),
                             lastPair = pairs[pairs.length - 1];
-
+                        
                         // add pair for daily rest period
                         pairs.push({
                             start: lastPair.end.clone(),
@@ -1159,7 +1190,7 @@
                             type: TYPE_AT_HOME,
                             synthetic: BOOKING_SYNTHETIC
                         });
-
+                        
                         insertSpecialPointsAfterAmountOfTime(pairs);
                         insertSpecialPointsAtTimestamp(pairs);
                         pairs.forEach(calcSvgPosititions);
@@ -1231,13 +1262,11 @@
             $indexedDBProvider
                 .connection(IDB_NAME)
                 .upgradeDatabase(1, function (evt, db) {
-                    let objStore = db.createObjectStore(
-                            'trackedActions',
-                            { keyPath: 'timestamp' }
-                        );
-
-                    objStore.createIndex('type_idx', 'type', { unique: false });
-                    objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                    let objStore = db.createObjectStore('trackedActions',
+                            { keyPath: 'timestamp' });
+                    
+                    objStore.createIndex(INDEX_TYPE, 'type', { unique: false });
+                    objStore.createIndex(INDEX_TIMESTAMP, 'timestamp', { unique: true });
                 })
                 .upgradeDatabase(2, function (evt, db) {
                     db.createObjectStore('TrackrConfig', { keyPath: 'setting' });
@@ -1245,9 +1274,9 @@
                 .upgradeDatabase(3, function (evt, db) {
                     let objStore = db.createObjectStore('trackedBookings',
                             { keyPath: 'timestamp' });
-
-                    objStore.createIndex('type_idx', 'type', { unique: false });
-                    objStore.createIndex('tstamp_idx', 'timestamp', { unique: true });
+                    
+                    objStore.createIndex(INDEX_TYPE, 'type', { unique: false });
+                    objStore.createIndex(INDEX_TIMESTAMP, 'timestamp', { unique: true });
                 })
                 .upgradeDatabase(4, function (evt, db, tx) {
                     let bookings = db.createObjectStore(
@@ -1260,27 +1289,27 @@
                         ),
                         TrackrConfig = tx.objectStore('TrackrConfig'),
                         trackedBookings = tx.objectStore('trackedBookings');
-
-                    bookings.createIndex('type_idx', 'type', { unique: false });
-                    bookings.createIndex('tstamp_idx', 'timestamp', { unique: true });
-
+                    
+                    bookings.createIndex(INDEX_TYPE, 'type', { unique: false });
+                    bookings.createIndex(INDEX_TIMESTAMP, 'timestamp', { unique: true });
+                    
                     trackedBookings
                         .getAll()
                         .onsuccess = function (evt) {
                             let result = evt.target.result,
                                 idx;
-
+                            
                             for (idx = 0; idx < result.length; idx += 1) {
                                 bookings.add(result[idx]);
                             }
                         };
-
+                        
                     TrackrConfig
                         .getAll()
                         .onsuccess = function (evt) {
                             let result = evt.target.result,
                                 idx;
-
+                            
                             for (idx = 0; idx < result.length; idx += 1) {
                                 config.add(result[idx]);
                             }
