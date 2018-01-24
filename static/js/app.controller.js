@@ -350,8 +350,11 @@
             return booking;
         }
         
+        $scope.totalBookingsCount = 0;
+        $scope.earliestBookingTimestamp = moment().subtract(7, 'days').hours(0).minutes(0).seconds(0);
         function updateBookings(earliestBookingTimestamp) {
-            earliestBookingTimestamp = earliestBookingTimestamp || $scope.earliestBookingTimestamp;
+            earliestBookingTimestamp = earliestBookingTimestamp instanceof moment ? earliestBookingTimestamp : $scope.earliestBookingTimestamp;
+            
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 let find = store.query();
                 
@@ -381,8 +384,6 @@
             return booking.selected === false;
         }
         
-        $scope.totalBookingsCount = 0;
-        $scope.earliestBookingTimestamp = moment().subtract(7, 'days').hours(0).minutes(0).seconds(0);
         $scope.updateEarliestBookingTimestamp = function (earliestBookingTimestamp) {
             let numDisplayedBookings = $scope.bookings.length;
             
