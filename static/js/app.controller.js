@@ -391,8 +391,7 @@
             earliestBookingTimestamp.subtract(7, 'days');
             updateBookings(earliestBookingTimestamp);
             $timeout(function () {
-                if ($scope.bookings.length === numDisplayedBookings &&
-                        numDisplayedBookings < $scope.totalBookingsCount) {
+                if ($scope.bookings.length === numDisplayedBookings) {
                     $scope.updateEarliestBookingTimestamp(earliestBookingTimestamp);
                 } else {
                     $scope.earliestBookingTimestamp = earliestBookingTimestamp;
