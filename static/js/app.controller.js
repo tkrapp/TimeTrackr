@@ -351,23 +351,33 @@
         }
         
         $scope.totalBookingsCount = 0;
-        $scope.earliestBookingTimestamp = moment().subtract(7, 'days').hours(0).minutes(0).seconds(0);
+        $scope.earliestBookingTimestamp = (moment().subtract(7, 'days')
+            .hours(0).minutes(0).seconds(0));
         function updateBookings(earliestBookingTimestamp) {
-            earliestBookingTimestamp = earliestBookingTimestamp instanceof moment ? earliestBookingTimestamp : $scope.earliestBookingTimestamp;
+            let prevBookingTimestamp = (earliestBookingTimestamp instanceof moment ?
+                $scope.earliestBookingTimestamp : null);
+            earliestBookingTimestamp = (earliestBookingTimestamp instanceof moment ?
+                earliestBookingTimestamp : $scope.earliestBookingTimestamp);
             
             storage.openStore(OBJECT_STORE_NAME, function (store) {
                 let find = store.query();
                 
                 find.$gte(earliestBookingTimestamp.unix());
-                find.$index(INDEX_TIMESTAMP);
                 
+                find.$index(INDEX_TIMESTAMP);
                 store.eachWhere(find).then(function (result) {
-                    $scope.bookings = result
-                        .sort(sort_by_timestamp_desc)
-                        .map(enhanceBooking);
-                    
-                    // Force ui to update
-                    $scope.$applyAsync();
+                    if (result.length > $scope.bookings.length) {
+                        $scope.bookings = result
+                            .sort(sort_by_timestamp_desc)
+                            .map(enhanceBooking);
+                        $scope.earliestBookingTimestamp = earliestBookingTimestamp;
+                        // Force ui to update
+                        $scope.$applyAsync();
+                    } else {
+                        $timeout(function () {
+                            $scope.getEarlierBookings(earliestBookingTimestamp);
+                        }, 0);
+                    }
                 });
                 
                 store.count().then(function (count) {
@@ -384,20 +394,14 @@
             return booking.selected === false;
         }
         
-        $scope.updateEarliestBookingTimestamp = function (earliestBookingTimestamp) {
+        $scope.getEarlierBookings = function (earliestBookingTimestamp) {
             let numDisplayedBookings = $scope.bookings.length;
             
-            earliestBookingTimestamp = earliestBookingTimestamp || $scope.earliestBookingTimestamp.clone();
+            earliestBookingTimestamp = 
+                earliestBookingTimestamp || $scope.earliestBookingTimestamp.clone();
             
             earliestBookingTimestamp.subtract(7, 'days');
             updateBookings(earliestBookingTimestamp);
-            $timeout(function () {
-                if ($scope.bookings.length === numDisplayedBookings) {
-                    $scope.updateEarliestBookingTimestamp(earliestBookingTimestamp);
-                } else {
-                    $scope.earliestBookingTimestamp = earliestBookingTimestamp;
-                }
-            }, 50);
         };
         
         $scope.updateSelectedBookings = function () {
@@ -433,8 +437,7 @@
                     .highlightClass('md-primary')
                     .hideDelay(TOAST_DELAY);
                 
-                $scope.bookings = $scope.bookings
-                    .filter(isNotSelectedBooking);
+                $scope.bookings = $scope.bookings.filter(isNotSelectedBooking);
                 
                 $mdToast
                     .show(toast)
