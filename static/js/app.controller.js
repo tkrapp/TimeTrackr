@@ -264,7 +264,7 @@
             $scope.hours = undefined;
             $scope.timestamp = undefined;
         }
-        sort_by_timestamp_desc
+
         $scope.showPointInTimeDialog = function (ev) {
             $mdDialog.show({
                 locals: {
