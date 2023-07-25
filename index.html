@@ -29,6 +29,17 @@
     <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_256.png" sixes="256x256" />
     <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_384.png" sixes="384x384" />
     <link rel="apple-touch-icon" href="static/icons/launcher/apple_launcher_icon_512.png" sixes="512x512" />
+    <script type="text/javascript">
+        if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker
+      .register("/serviceworker.js")
+      .then(res => console.log("service worker registered"))
+      .catch(err => console.log("service worker not registered", err));
+  });
+}
+            </script>
+
 </head>
 
 <body>
